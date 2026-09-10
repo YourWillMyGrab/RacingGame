@@ -5,7 +5,7 @@ Status values: TODO / IN_PROGRESS / DONE / BLOCKED
 | Milestone | Description | Status |
 |---|---|---|
 | 0 | Project skeleton | DONE |
-| 1 | Driving prototype | TODO |
+| 1 | Driving prototype | IN_PROGRESS |
 | 2 | Modular road | TODO |
 | 3 | One complete race | TODO |
 | 4 | Roguelike slice | TODO |
