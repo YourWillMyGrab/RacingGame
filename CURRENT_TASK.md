@@ -1,10 +1,10 @@
 # Current Task
 
-- Task id: M4-reward-build-slice
-- Goal: Three-event run with seeded one-of-three rewards, rarity, temporary build hooks/settings, controller selection, victory and clean reset.
-- Files changed: src/game.ts, src/input.ts, src/run.ts, src/race.ts, src/vehicle.ts, src/style.css, tests/, README and state files. Foundation committed earlier in src/events.ts and src/upgrades.ts.
-- Acceptance criteria: Unique nonempty seeded rewards; placement-dependent rarity; explicit cursed downsides; distinct drift/impact/power mechanics; safely removable hooks; reset clears all resources/build/history; complete browser loop passes.
-- Baseline commit: 48653d9 (M4 foundation).
-- Status: DONE.
-- Verification: 22 automated tests and build passed; final `npm run test:run` passed all three events, two reward choices (keyboard and simulated controller), recovery, lower-placement penalty, victory and clean reset. Total run 178.18s; final integrity 82.69; new run reset exactly to integrity 100, Flow 25, event 0 and no upgrades.
-- Resume notes: Current step is complete. Airborne progress and missed-gate recovery fixes are covered by tests. See PROJECT_STATE/ROADMAP for M5; do not restart this completed task or infer the full MVP is finished.
+- Task id: review-driving-menu-italian
+- Goal: Address user feedback: technical circuits that reward braking, accessible skill-based Flow, a real main menu, and consistent Italian localization.
+- Files expected to change: src/config.ts, src/vehicle.ts, src/road/, src/race.ts, src/game.ts, src/input.ts, src/lab.ts, src/upgrades.ts, src/style.css, tests/, docs.
+- Acceptance criteria: Every generated race has readable technical braking sectors; a braking driver outperforms full-throttle driving there; useful Flow without upgrades; no idle/handbrake farming; menu and modes work with keyboard/controller; Italian player-facing labels; regression/build/browser checks pass.
+- Baseline commit: aea3264 (stable gameplay e90fe92).
+- Status: IN_PROGRESS
+- Review findings: Road curvature is too mild, lateral tire force is unbounded, high-speed Flow threshold 38 m/s is above normal engine equilibrium, drift eligibility is narrow, title screen lacks a main-menu hierarchy and player text mixes English/internal terms.
+- Resume: Implement this feedback pass before M5. Preserve checkpoints, recovery, seeded runs and temporary upgrades.
