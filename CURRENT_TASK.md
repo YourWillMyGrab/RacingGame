@@ -1,9 +1,9 @@
 # Current Task
 
-- Task id: M3-six-car-race
-- Goal: Player plus five physically simulated rivals, countdown, validated checkpoints, ordered finishes, results and race restart.
-- Files expected to change: src/race.ts, src/game.ts, src/car.ts, src/vehicle.ts, tests/race*, state files.
-- Acceptance criteria: Six separate physical cars; AI follows routes and recovers; countdown locks motion; checkpoints cannot be skipped; finishing order remains stable; complete browser race and restart pass.
-- Baseline commit: 5bb3894
-- Status: DONE
-- Resume notes: M2 complete and committed. Preserve /?lab=1 and add /?solo=1 for modular-road regression mode. No rubber-band teleportation.
+- Task id: M4-reward-build-slice
+- Goal: A short three-event run with seeded one-of-three rewards, rarity, temporary build modifiers/hooks and clean reset.
+- Files expected to change: src/upgrades.ts, src/run.ts, src/events.ts, src/vehicle.ts, src/game.ts, src/input.ts, tests/, state files.
+- Acceptance criteria: No empty/duplicate reward choices; placement affects rarity; cursed effects have downsides; three distinct build directions; event hooks detach safely; run reset clears all effects; browser reward/continue/new-run loop passes.
+- Baseline commit: latest fix: preserve integrity after crossing the finish (M3 stable).
+- Status: IN_PROGRESS
+- Resume notes: M3 race/playtest passed; finish-stop damage fixed and regression-tested. M4 is a short coastal slice, not the full three-biome MVP; physical forks/seamless events remain M5.

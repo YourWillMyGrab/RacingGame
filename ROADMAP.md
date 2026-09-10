@@ -8,7 +8,7 @@ Status values: TODO / IN_PROGRESS / DONE / BLOCKED
 | 1 | Driving prototype | DONE |
 | 2 | Modular road | DONE |
 | 3 | One complete race | DONE |
-| 4 | Roguelike slice | TODO |
+| 4 | Roguelike slice | IN_PROGRESS |
 | 5 | Procedural world loop | TODO |
 | 6 | First complete biome | TODO |
 | 7 | Full three-biome run | TODO |
