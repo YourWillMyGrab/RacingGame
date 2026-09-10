@@ -78,8 +78,8 @@ export class Race {
     this.world.step();
     const crossings:{r:Racer;time:number}[]=[];
     for(const r of this.racers) {
-      r.vehicle.afterStep();
       if(r.finishTime!==null)continue;
+      r.vehicle.afterStep();
       const progress=r.vehicle.progress;
       r.checkpoint=advanceCheckpoint(r.previous,progress,r.checkpoint,this.finish);
       if(r.checkpoint===this.finish && r.previous<this.finish && progress>=this.finish && progress-r.previous<=12 && r.vehicle.integrity>0) {
