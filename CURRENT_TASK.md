@@ -1,9 +1,9 @@
 # Current Task
 
-- Task id: M2.2-streamed-driving
-- Goal: Drive the seeded modules with streamed geometry/colliders, road-aware recovery, seed controls and debug view.
-- Files expected to change: src/road/stream.ts, src/vehicle.ts, src/game.ts, src/main.ts, src/lab.ts, tests/, state files.
-- Acceptance criteria: Original lab tests still pass; module joins/elevation can be driven; colliders/meshes unload and reload correctly; seed restart reproduces route; browser playtest passes.
-- Baseline commit: latest feat: add validated seeded road module assembly
-- Status: DONE
-- Resume notes: Data generation validated across 1000 seeds. Preserve ?lab=1 regression mode. Integrate into a point-to-point road before AI racing.
+- Task id: M3-six-car-race
+- Goal: Player plus five physically simulated rivals, countdown, validated checkpoints, ordered finishes, results and race restart.
+- Files expected to change: src/race.ts, src/game.ts, src/car.ts, src/vehicle.ts, tests/race*, state files.
+- Acceptance criteria: Six separate physical cars; AI follows routes and recovers; countdown locks motion; checkpoints cannot be skipped; finishing order remains stable; complete browser race and restart pass.
+- Baseline commit: 5bb3894
+- Status: IN_PROGRESS
+- Resume notes: M2 complete and committed. Preserve /?lab=1 and add /?solo=1 for modular-road regression mode. No rubber-band teleportation.
