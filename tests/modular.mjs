@@ -5,7 +5,7 @@ await mkdir('test-results',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
 const page=await browser.newPage({viewport:{width:1440,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
-await page.goto('http://127.0.0.1:5173/?seed=7F2C-A91D');await page.click('#start');
+await page.goto('http://127.0.0.1:5173/?solo=1&seed=7F2C-A91D');await page.click('#start');
 await page.evaluate(async()=>{
   const {ModularRoute}=await import('/src/road/route.ts');const route=new ModularRoute(window.__roadGame.seed);
   const pad={mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};

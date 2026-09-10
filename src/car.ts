@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-export function createCar() {
+export function createCar(color=0xff704a) {
   const root=new THREE.Group(), body=new THREE.Group(); root.add(body);
-  const paint=new THREE.MeshStandardMaterial({color:0xff704a,metalness:.48,roughness:.28});
+  const paint=new THREE.MeshStandardMaterial({color,metalness:.48,roughness:.28});
   const dark=new THREE.MeshStandardMaterial({color:0x08171d,metalness:.35,roughness:.35});
   const glass=new THREE.MeshStandardMaterial({color:0x386c7a,metalness:.8,roughness:.16});
   function box(w:number,h:number,d:number,x:number,y:number,z:number,mat:THREE.Material) { const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);body.add(mesh);return mesh; }

@@ -9,3 +9,5 @@
 - No Git remote configured; local development and commits work. No off-device backup was created.
 
 - M2 generator intentionally advances within a bounded heading corridor to prohibit self-intersections. Hairpins, forks, shortcuts and branch validation are not implemented. Geometry is streamed but lightweight route metadata is generated upfront (bounded to 128 modules).
+
+- AI uses a lightweight passing-line heuristic; deliberate defense, drafting and richer personalities remain future tuning. Cars that finish are ghosted against other cars so they cannot block the finish.

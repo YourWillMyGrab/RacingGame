@@ -9,3 +9,5 @@
 - Blockers: None.
 - Commands: npm ci; npm run dev; npm run build; npm test; npm run test:stress -- 1000. With Chrome + dev server: npm run test:browser; npm run test:lap; npm run test:modular.
 - Validation: 13 tests passed, 1,000-seed stress passed. Original keyboard/gamepad regression passed. Full modular Chrome playtest finished 2,860 m in 109.33s, integrity 100, no recoveries, 24 chunks created / 21 unloaded, 3 remaining; same-seed restart passed. Screenshot inspected.
+
+- M3 completed: full six-car Chrome race and restart passed, 15 tests pass. New stable milestone M3; next action M4 temporary build/rewards. Baseline M2 commit 5bb3894; see next feat: add six-car checkpoint racing commit.

@@ -65,3 +65,13 @@ npm run test:modular
 ```
 
 The modular browser test drives the full road using a simulated analog controller, checks unloaded chunks and restarts the same seed. The stress test reports unsupported branches explicitly rather than claiming to validate nonexistent forks.
+
+## Six-car racing (M3)
+
+The default route is now a race against five seeded rivals. `/?solo=1` preserves the modular-road test drive and `/?lab=1` the oval. A three-second countdown locks the grid, then every racer uses the same dynamic vehicle model. Rivals have seeded pace, preferred lines and aggression; they brake for corners and choose a passing lane around nearby cars. Stuck recovery returns to an earlier valid anchor and holds the car for three seconds.
+
+Race position uses validated road progress and ordered checkpoints. Recovery is a real three-second hold, already included in race time. Finishes are ordered by crossing time; cars that finish become noncolliding with other racers to keep the finish line clear. Results keep simulating remaining rivals for up to 30 seconds; unfinished racers are explicitly marked rather than assigned invented times. Start on controller resumes or retries from the result screen.
+
+```sh
+npm run test:race
+```

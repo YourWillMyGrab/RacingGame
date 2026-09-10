@@ -9,6 +9,7 @@ const labRoute: DrivableRoute = {length:TRACK_LENGTH,start:25,pointAt:s=>({...tr
 const clamp = (v: number, min: number, max: number) => Math.min(max,Math.max(min,v));
 export class Vehicle {
   body: RAPIER.RigidBody;
+  collider: RAPIER.Collider;
   flow = 25;
   integrity = 100;
   speed = 0;
@@ -34,7 +35,7 @@ export class Vehicle {
     this.lastAnchor=route.start;this.progress=route.start;
     this.body=world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(p.x,p.y+1,p.z).setCanSleep(false).setCcdEnabled(true));
     this.body.setEnabledRotations(false,true,false,true);
-    world.createCollider(RAPIER.ColliderDesc.cuboid(.92,.28,1.95).setMass(t.mass).setFriction(.05).setRestitution(.08),this.body);
+    this.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.92,.28,1.95).setMass(settings.mass).setFriction(.05).setRestitution(.08).setCollisionGroups(0x00020003),this.body);
   }
   get yaw() { const q=this.body.rotation(); return Math.atan2(2*q.w*q.y,1-2*q.y*q.y); }
   step(input: Controls, dt: number) {
