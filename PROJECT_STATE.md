@@ -2,7 +2,7 @@
 
 - Current stable milestone: Milestone 0 — DONE. Milestone 1 implementation is playable; handling acceptance and physical gamepad validation remain IN_PROGRESS.
 - Current stable micro-milestone: M1 fixed-track driving, Flow/boost, collisions, recovery, session HUD and tuning — implemented and automatically validated.
-- Last known working commit: see latest `feat: add playable fixed-track driving prototype` in git log (exact hash recorded in the following documentation checkpoint).
+- Last known working commit: 4d97e1f (`feat: add playable fixed-track driving prototype`). Subsequent documentation-only checkpoint records this hash.
 - What currently works: Three.js/Rapier fixed-track driving; four suspension ray contacts; speed-sensitive steering; brake/reverse; controlled drift earns Flow; boost consumes Flow; impacts damage integrity; wreck/restart session; safe recovery with +3s penalty; lap counter; chase camera; keyboard and standard Gamepad API; pause on focus loss; live tuning/debug metrics.
 - What is incomplete: Physical controller and subjective feel acceptance; ramps/elevation and richer handling cases; all procedural/AI/roguelike systems (M2 onward). This is not the full game/MVP.
 - Exact next recommended action: Resume from this clean checkpoint; run build/tests and the browser checks; tune repeated laps and validate a connected physical standard controller before starting M2. Do not infer subjective handling approval from automated lap completion.
