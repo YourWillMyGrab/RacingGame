@@ -6,7 +6,7 @@ Status values: TODO / IN_PROGRESS / DONE / BLOCKED
 |---|---|---|
 | 0 | Project skeleton | DONE |
 | 1 | Driving prototype | DONE |
-| 2 | Modular road | IN_PROGRESS |
+| 2 | Modular road | DONE |
 | 3 | One complete race | TODO |
 | 4 | Roguelike slice | TODO |
 | 5 | Procedural world loop | TODO |
@@ -29,3 +29,5 @@ Status values: TODO / IN_PROGRESS / DONE / BLOCKED
 M2 authorized by user after accepting the prototype. Physical controller testing remains pending.
 
 | M2.1 | Authored modules, seeded assembly and stress validation | DONE |
+
+| M2.2 | Streamed drivable geometry, seed UI, recovery, debug view and complete route playtest | DONE |

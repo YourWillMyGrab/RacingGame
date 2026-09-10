@@ -1,9 +1,9 @@
 # Current Task
 
-- Task id: M2.1-road-data
-- Goal: Authored module metadata, socket validation, isolated seed streams and bounded deterministic assembly.
-- Files expected to change: src/road/, tests/road.test.ts, tests/stress.ts, state files.
-- Acceptance criteria: Identical seeds reproduce route; different seeds vary; invalid sockets/modules rejected; stress generation terminates and creates connected drivable finish paths.
-- Baseline commit: 918d350
+- Task id: M2.2-streamed-driving
+- Goal: Drive the seeded modules with streamed geometry/colliders, road-aware recovery, seed controls and debug view.
+- Files expected to change: src/road/stream.ts, src/vehicle.ts, src/game.ts, src/main.ts, src/lab.ts, tests/, state files.
+- Acceptance criteria: Original lab tests still pass; module joins/elevation can be driven; colliders/meshes unload and reload correctly; seed restart reproduces route; browser playtest passes.
+- Baseline commit: latest feat: add validated seeded road module assembly
 - Status: DONE
-- Resume notes: User accepted the starting prototype and explicitly authorized continuation. Physical controller validation remains documented but does not block this authorized work. Baseline 7 tests pass. Preserve the fixed driving lab for regression checks.
+- Resume notes: Data generation validated across 1000 seeds. Preserve ?lab=1 regression mode. Integrate into a point-to-point road before AI racing.

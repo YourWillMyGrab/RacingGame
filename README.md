@@ -50,3 +50,18 @@ Apri **TELEMETRIA / TUNING** per modificare la guida dal vivo. Le regolazioni du
 - `tests/`: verifiche fisiche e playtest riproducibili.
 
 La pista è volutamente piatta. Rollio e beccheggio del telaio sono visivi, mentre la fisica consente rotazione sull'asse verticale e movimento verticale con sospensioni. Non ci sono ancora rivali, eventi, upgrade, salti o run roguelike. Vedi `PROJECT_STATE.md` e `KNOWN_ISSUES.md` per lo stato preciso.
+
+## Modular roads (M2)
+
+The default entry point now loads a point-to-point seeded road; `/?lab=1` preserves the original oval and live tuning. Enter a seed on the title screen or use `?seed=7F2C-A91D` to replay it. The same version and seed reproduce all road geometry. The title, HUD, pause and results show the seed.
+
+The first module library includes start/finish, straights, left/right sweepers, S-curves, gentle crests, tunnels and bridges. Road profiles are authored data; the generator assembles compatible pieces and shapes challenge/release rhythm. This version intentionally follows a nonintersecting corridor; forks and jumps are later milestones.
+
+Rendering and collision are loaded ahead and removed behind. The debug panel shows active chunks, colliders, load/unload counts, module IDs, entry sockets and recovery markers. Recovery chooses an unoccupied earlier road anchor. Finish the road to reach results, replay the same seed or choose another.
+
+```sh
+npm run test:stress -- 1000
+npm run test:modular
+```
+
+The modular browser test drives the full road using a simulated analog controller, checks unloaded chunks and restarts the same seed. The stress test reports unsupported branches explicitly rather than claiming to validate nonexistent forks.

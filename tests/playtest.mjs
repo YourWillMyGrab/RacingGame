@@ -6,7 +6,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
 const page=await browser.newPage({viewport:{width:1440,height:900}});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
-await page.goto('http://127.0.0.1:5173');await page.waitForSelector('#start');
+await page.goto('http://127.0.0.1:5173/?lab=1');await page.waitForSelector('#start');
 await page.screenshot({path:'test-results/title.png'});
 await page.click('#start');
 const snapshot=()=>page.evaluate(()=>window.__drivingLab);

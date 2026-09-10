@@ -1,7 +1,10 @@
 import RAPIER from '@dimforge/rapier3d-compat';
 import { tuning as t } from './config';
 import type { Controls } from './input';
-import { nearestAnchor, trackPoint, TRACK } from './track';
+import { nearestAnchor, trackPoint, TRACK, TRACK_LENGTH } from './track';
+import type { DrivableRoute } from './road/route';
+
+const labRoute: DrivableRoute = {length:TRACK_LENGTH,start:25,pointAt:s=>({...trackPoint(s),y:0,s,width:TRACK.width}),nearest:(x,z)=>({...nearestAnchor(x,z),y:0,width:TRACK.width})};
 
 const clamp = (v: number, min: number, max: number) => Math.min(max,Math.max(min,v));
 export class Vehicle {
@@ -20,18 +23,22 @@ export class Vehicle {
   recoveries = 0;
   penalty = 0;
   lastAnchor = 25;
+  progress = 25;
   private cooldown = 0;
   private previousSpeed = 0;
   private airTime = 0;
   private reverseArmed = false;
   private stopTime = 0;
-  constructor(private world: RAPIER.World) {
-    this.body=world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(64,1,70).setCanSleep(false).setCcdEnabled(true));
+  constructor(private world: RAPIER.World, readonly route:DrivableRoute=labRoute, readonly settings=t) {
+    const p=route.pointAt(route.start);
+    this.lastAnchor=route.start;this.progress=route.start;
+    this.body=world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(p.x,p.y+1,p.z).setCanSleep(false).setCcdEnabled(true));
     this.body.setEnabledRotations(false,true,false,true);
     world.createCollider(RAPIER.ColliderDesc.cuboid(.92,.28,1.95).setMass(t.mass).setFriction(.05).setRestitution(.08),this.body);
   }
   get yaw() { const q=this.body.rotation(); return Math.atan2(2*q.w*q.y,1-2*q.y*q.y); }
   step(input: Controls, dt: number) {
+    const t=this.settings;
     const p=this.body.translation(), v=this.body.linvel(), yaw=this.yaw;
     const fx=-Math.sin(yaw), fz=-Math.cos(yaw), rx=Math.cos(yaw), rz=-Math.sin(yaw);
     const forward=v.x*fx+v.z*fz, lateral=v.x*rx+v.z*rz;
@@ -79,8 +86,8 @@ export class Vehicle {
     if(this.grounded) {
       if(this.airTime>.3 && v.y < -6) this.damage((-v.y-6)*t.damageScale);
       this.airTime=0;
-      const anchor=nearestAnchor(p.x,p.z);
-      if(anchor.distance<TRACK.width/2-2 && this.speed>2) this.lastAnchor=anchor.s;
+      const anchor=this.route.nearest(p.x,p.z,this.progress);
+      if(anchor.distance<anchor.width/2-2) {this.progress=anchor.s;if(this.speed>2)this.lastAnchor=anchor.s;}
     } else this.airTime+=dt;
     if(p.y < -8) this.recover();
     this.previousSpeed=this.speed;
@@ -96,16 +103,25 @@ export class Vehicle {
   }
   recover() {
     if(this.integrity<=0) return;
-    const p=trackPoint(this.lastAnchor);
-    this.body.setTranslation({x:p.x,y:1.2,z:p.z},true);
+    let p=this.route.pointAt(this.lastAnchor);
+    // Search backward if another racer occupies the recovery anchor.
+    let free=false;
+    for(let back=0;back<=90;back+=6) {
+      p=this.route.pointAt(Math.max(0,this.lastAnchor-back));
+      const rotation={x:0,y:Math.sin(p.yaw/2),z:0,w:Math.cos(p.yaw/2)};
+      if(!this.world.intersectionWithShape({x:p.x,y:p.y+1.2,z:p.z},rotation,new RAPIER.Cuboid(1,.3,2.1),undefined,undefined,undefined,this.body)){free=true;break;}
+    }
+    if(!free)return;
+    this.body.setTranslation({x:p.x,y:p.y+1.2,z:p.z},true);
     this.body.setRotation({x:0,y:Math.sin(p.yaw/2),z:0,w:Math.cos(p.yaw/2)},true);
     this.body.setLinvel({x:0,y:0,z:0},true); this.body.setAngvel({x:0,y:0,z:0},true);
     this.body.resetForces(true); this.body.resetTorques(true);
     this.speed=0; this.previousSpeed=0; this.steer=0; this.slip=0; this.driftTime=0; this.airTime=0;this.cooldown=1;
     this.boosting=false;this.drifting=false; this.penalty+=t.recoveryPenalty; this.recoveries++;
+    this.progress=p.s;this.lastAnchor=p.s;
   }
   restart() {
-    this.integrity=100;this.lastAnchor=25;this.recover();this.flow=25;this.penalty=0;this.recoveries=0;
+    this.integrity=100;this.lastAnchor=this.route.start;this.recover();this.flow=25;this.penalty=0;this.recoveries=0;
     this.reverseArmed=false;this.stopTime=0;
   }
 }

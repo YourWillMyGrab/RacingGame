@@ -9,7 +9,9 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "tsx --test tests/*.test.ts",
     "test:browser": "node tests/playtest.mjs",
-    "test:lap": "node tests/lap.mjs"
+    "test:lap": "node tests/lap.mjs",
+    "test:stress": "tsx tests/stress.ts",
+    "test:modular": "node tests/modular.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.20.0",

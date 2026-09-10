@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
 const page=await browser.newPage({viewport:{width:1280,height:800}});
-await page.goto('http://127.0.0.1:5173');await page.click('#start');
+await page.goto('http://127.0.0.1:5173/?lab=1');await page.click('#start');
 await page.evaluate(async()=>{
   const {trackPoint,nearestAnchor}=await import('/src/track.ts');
   const pad={mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};

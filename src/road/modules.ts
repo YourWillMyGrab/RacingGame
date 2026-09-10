@@ -52,11 +52,17 @@ export function validateModule(m: RoadModule): string[] {
   if(![m.turn,m.wave,m.rise,m.curvature,m.maxGrade,m.recommendedSpeed,m.minSightDistance].every(Number.isFinite)) errors.push('non-finite metadata');
   const curvature=(Math.abs(m.turn)+Math.abs(m.wave)*2*Math.PI)/m.length;
   if(curvature>.016 || m.curvature<curvature-1e-9) errors.push('curvature');
-  if(Math.abs(m.rise)*Math.PI/m.length>.09 || m.maxGrade>.09) errors.push('grade');
+  if(Math.abs(m.rise)*Math.PI/m.length>.09 || m.maxGrade>.09 || m.maxGrade<Math.abs(m.rise)*Math.PI/m.length-1e-9) errors.push('grade');
   if(!m.aiCompatible || m.recommendedSpeed<10 || m.recommendedSpeed>50) errors.push('AI');
   if(m.minSightDistance<m.recommendedSpeed*2) errors.push('sight distance');
   if(!m.recoveryAnchors.length || m.recoveryAnchors.some(s=>!Number.isFinite(s)||s<=0||s>=m.length)) errors.push('recovery anchors');
   if(m.entry.width!==m.width || m.exit.width!==m.width || m.entry.grade!==0 || m.exit.grade!==0) errors.push('socket profile');
+  if(!validateConnection(m.entry,{x:0,y:0,z:0,yaw:0,grade:0,width:m.width}))errors.push('entry transform');
+  if(!errors.includes('length') && Number.isFinite(m.turn) && Number.isFinite(m.wave)) {
+    let x=0,z=0;const n=Math.ceil(m.length/2);
+    for(let i=0;i<n;i++){const u=(i+.5)/n,yaw=m.turn*u+m.wave*Math.sin(u*Math.PI*2);x-=Math.sin(yaw)*m.length/n;z-=Math.cos(yaw)*m.length/n;}
+    if(!validateConnection(m.exit,{x,y:0,z,yaw:m.turn,grade:0,width:m.width}))errors.push('exit transform');
+  }
   return errors;
 }
 

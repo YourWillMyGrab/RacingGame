@@ -16,3 +16,5 @@
 - Reviewed project Markdown, corrected state/blocker descriptions and documented startup and limitations.
 
 - M2.1: Added 11 authored road profiles, independent deterministic random streams, socket validation and reproducible 1,000-seed stress command.
+
+- M2.2: Connected authored geometry to drivable Rapier trimeshes, streamed chunks/colliders, tunnel/bridge scenery, seed entry/replay, route progress and finish. Preserved original Driving Lab. Full 2,860m Chrome test passed at 100 integrity, with 21 chunks unloaded. Added occupied-recovery regression.
