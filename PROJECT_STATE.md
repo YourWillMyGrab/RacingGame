@@ -1,10 +1,11 @@
 # Project State
 
-- Current stable milestone: Milestone 0 — Project Skeleton
-- Current stable micro-milestone: Repository and recovery state initialized
-- Last known working commit: 21ac091 (`chore: initialize Astra racing roguelike repository`)
-- What currently works: Git repository and project documentation baseline
-- What is incomplete: Browser project, driving prototype, tests, and playtest
-- Exact next recommended action: Create the minimal Vite + TypeScript + Three.js skeleton, then implement Milestone 1 as a vertical slice.
-- Current known blockers: No remote repository URL configured.
-- Required commands to run/build/test: To be defined with the project skeleton.
+- Current stable milestone: Milestone 0 — DONE
+- Current stable micro-milestone: Browser skeleton, fixed track, Rapier and input abstraction.
+- Last known working commit: see latest `feat: initialize browser driving lab` commit in git log.
+- What currently works: Vite/TypeScript build, Three.js track with instanced barriers/scenery, Rapier collision world, keyboard/gamepad input abstraction, FPS/draw-call overlay.
+- What is incomplete: Vehicle controller and Milestone 1 gameplay; Milestones 2–9.
+- Exact next recommended action: Implement the fixed-track driving vehicle and validate actual controls in browser.
+- Current known blockers: None. Git remote is optional.
+- Commands: `npm install`, `npm run dev`, `npm run build`. Tests arrive with the vehicle controller.
+- Validation: production build passed; Chrome loaded canvas and initialized 781 colliders (26 draw calls). No gameplay milestone claimed yet.

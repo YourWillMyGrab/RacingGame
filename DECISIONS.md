@@ -5,3 +5,5 @@
 - Target stack: TypeScript, Vite, Three.js, and a custom arcade/simcade vehicle controller.
 - Run-critical randomness must use deterministic seeded streams; `Math.random()` is not allowed for gameplay generation.
 - There is one base player car in the MVP; build identity comes from temporary run upgrades.
+
+- Rapier 3D compatibility/WASM package owns collisions; vehicle handling is a custom fixed-step controller. Local Git does not require a remote. Dependencies are exact-pinned in package-lock.json.
