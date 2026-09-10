@@ -22,3 +22,5 @@
 - M3: Added five physical AI rivals, seeded personalities and passing behavior, locked countdown, ordered checkpoints, finishing times, three-second recovery holds and race results/restart. 15 tests and full Chrome race passed (1st, 107.30s, 100 integrity).
 
 - Fixed result-screen stop incorrectly counting as collision damage; finished racers no longer receive impact evaluation. Added post-finish integrity regression.
+
+- M4 foundation: added typed removable gameplay hooks, 14 data-defined upgrades, seeded placement-weighted rewards, three-event temporary run state and build/reset regression tests. UI connection is next.

@@ -3,6 +3,10 @@ import { tuning as t } from './config';
 import type { Controls } from './input';
 import { nearestAnchor, trackPoint, TRACK, TRACK_LENGTH } from './track';
 import type { DrivableRoute } from './road/route';
+import { EventBus } from './events';
+
+export interface VehicleEvent { car:Vehicle;dt:number;amount:number;input:Controls }
+export interface VehicleEvents { tick:VehicleEvent;drift:VehicleEvent;driftExit:VehicleEvent;boost:VehicleEvent;damage:VehicleEvent;landing:VehicleEvent }
 
 const labRoute: DrivableRoute = {length:TRACK_LENGTH,start:25,pointAt:s=>({...trackPoint(s),y:0,s,width:TRACK.width}),nearest:(x,z)=>({...nearestAnchor(x,z),y:0,width:TRACK.width})};
 
@@ -25,6 +29,9 @@ export class Vehicle {
   penalty = 0;
   lastAnchor = 25;
   progress = 25;
+  readonly events=new EventBus<VehicleEvents>();
+  power=1;
+  surge=0;
   private cooldown = 0;
   private previousSpeed = 0;
   private airTime = 0;
@@ -40,6 +47,8 @@ export class Vehicle {
   get yaw() { const q=this.body.rotation(); return Math.atan2(2*q.w*q.y,1-2*q.y*q.y); }
   step(input: Controls, dt: number) {
     const t=this.settings;
+    this.power=1;this.surge=Math.max(0,this.surge-dt);
+    this.events.emit('tick',{car:this,dt,amount:0,input});
     const p=this.body.translation(), v=this.body.linvel(), yaw=this.yaw;
     const fx=-Math.sin(yaw), fz=-Math.cos(yaw), rx=Math.cos(yaw), rz=-Math.sin(yaw);
     const forward=v.x*fx+v.z*fz, lateral=v.x*rx+v.z*rz;
@@ -58,7 +67,11 @@ export class Vehicle {
     this.steer+=(input.steer-this.steer)*(1-Math.exp(-t.steerResponse*dt));
     const canDrive=this.integrity>0;
     this.boosting=canDrive && input.boost && input.throttle>.1 && this.flow>0 && this.grounded && forward>2;
+    const previousDrift=this.driftTime;
     this.drifting=canDrive && this.grounded && forward>t.minDriftSpeed && Math.abs(this.slip)>t.minSlip && Math.abs(this.slip)<t.maxSlip && !input.handbrake && input.throttle>.1;
+    if(this.drifting)this.events.emit('drift',{car:this,dt,amount:0,input});
+    else if(previousDrift>.35 && this.grounded && Math.abs(this.slip)<t.minSlip)this.events.emit('driftExit',{car:this,dt,amount:previousDrift,input});
+    if(this.boosting)this.events.emit('boost',{car:this,dt,amount:0,input});
     if(this.drifting) { this.driftTime+=dt; this.flow+=t.driftFlow*dt*(Math.abs(this.slip)/t.maxSlip+.5); }
     else { this.driftTime=0; if(this.speed>38 && this.grounded && !this.boosting) this.flow+=1.8*dt; else this.flow-=.3*dt; }
     if(this.boosting) this.flow-=t.flowDrain*dt;
@@ -69,7 +82,7 @@ export class Vehicle {
       if(Math.abs(forward)<.6 && input.brake>.1) this.stopTime+=dt;
       const reversing=this.reverseArmed || this.stopTime>.7;
       const max=this.boosting?t.boostMaxSpeed:t.maxSpeed;
-      let force=input.throttle*t.engine*clamp(1-Math.max(0,forward)/max,0,1);
+      let force=input.throttle*t.engine*this.power*(this.surge>0?1.6:1)*clamp(1-Math.max(0,forward)/max,0,1);
       if(input.brake>0) force+=forward>1 ? -input.brake*t.brakes : reversing ? -input.brake*t.reverse*clamp(1+forward/t.reverseSpeed,0,1) : -forward*t.mass*8;
       if(input.throttle>.1 && forward<0) force+=-forward*t.mass*3;
       if(this.boosting) force+=t.boostForce*clamp(1-forward/t.boostMaxSpeed,0,1);
@@ -85,6 +98,7 @@ export class Vehicle {
     this.body.addForce({x:-v.x*drag,y:0,z:-v.z*drag},true);
     this.cooldown=Math.max(0,this.cooldown-dt); this.impact*=Math.exp(-dt*5);
     if(this.grounded) {
+      if(this.airTime>.3)this.events.emit('landing',{car:this,dt,amount:this.airTime,input});
       if(this.airTime>.3 && v.y < -6) this.damage((-v.y-6)*t.damageScale);
       this.airTime=0;
       const anchor=this.route.nearest(p.x,p.z,this.progress);
@@ -94,6 +108,7 @@ export class Vehicle {
     this.previousSpeed=this.speed;
   }
   afterStep() {
+    const t=this.settings;
     const v=this.body.linvel(), speed=Math.hypot(v.x,v.z);
     const lost=this.previousSpeed-speed;
     if(lost>t.impactThreshold) this.damage((lost-t.impactThreshold)*t.damageScale);
@@ -101,6 +116,7 @@ export class Vehicle {
   private damage(amount: number) {
     if(this.cooldown>0 || amount<=0) return;
     this.integrity=clamp(this.integrity-amount,0,100); this.cooldown=.5; this.impact=Math.min(1,amount/25);
+    this.events.emit('damage',{car:this,dt:0,amount,input:{throttle:0,brake:0,steer:0,handbrake:false,boost:false}});
   }
   recover() {
     if(this.integrity<=0) return;
@@ -124,5 +140,6 @@ export class Vehicle {
   restart() {
     this.integrity=100;this.lastAnchor=this.route.start;this.recover();this.flow=25;this.penalty=0;this.recoveries=0;
     this.reverseArmed=false;this.stopTime=0;
+    this.surge=0;this.power=1;
   }
 }
