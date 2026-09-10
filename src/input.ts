@@ -1,26 +1,24 @@
 export interface Controls { throttle: number; brake: number; steer: number; handbrake: boolean; boost: boolean }
 export class Input {
   private keys = new Set<string>();
-  private previous = new Set<string>();
   private padPrevious: boolean[] = [];
   onPause = () => {};
   onRecover = () => {};
   device = 'Tastiera';
   constructor() {
     window.addEventListener('keydown', e => {
-      if ((e.target as HTMLElement).matches('input,select,button')) return;
+      if (!e.repeat && e.code === 'Escape') { this.onPause(); return; }
+      if ((e.target as HTMLElement).matches('input,select,textarea')) return;
+      if (!e.repeat && e.code === 'KeyR') { this.onRecover(); return; }
       if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
       this.keys.add(e.code);
     });
     window.addEventListener('keyup', e => this.keys.delete(e.code));
     window.addEventListener('blur', () => this.clear());
   }
-  clear() { this.keys.clear(); this.previous.clear(); }
+  clear() { this.keys.clear(); }
   sample(): Controls {
     const has = (...codes: string[]) => codes.some(c => this.keys.has(c));
-    if (has('Escape') && !this.previous.has('Escape')) this.onPause();
-    if (has('KeyR') && !this.previous.has('KeyR')) this.onRecover();
-    this.previous = new Set(this.keys);
     const result = { throttle: +has('KeyW','ArrowUp'), brake: +has('KeyS','ArrowDown'), steer: +has('KeyA','ArrowLeft') - +has('KeyD','ArrowRight'), handbrake: has('Space'), boost: has('ShiftLeft','ShiftRight') };
     const pad = Array.from(navigator.getGamepads?.() ?? []).find(p => p?.mapping === 'standard');
     if (pad) {

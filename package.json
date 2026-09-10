@@ -7,7 +7,9 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "test:browser": "node tests/playtest.mjs",
+    "test:lap": "node tests/lap.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.20.0",

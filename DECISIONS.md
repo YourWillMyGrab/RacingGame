@@ -7,3 +7,8 @@
 - There is one base player car in the MVP; build identity comes from temporary run upgrades.
 
 - Rapier 3D compatibility/WASM package owns collisions; vehicle handling is a custom fixed-step controller. Local Git does not require a remote. Dependencies are exact-pinned in package-lock.json.
+
+- The M1 circuit is a fixed oval, not procedural assembly. Its mathematical sampling must not be presented as completion of M2.
+- Suspension uses four downward Rapier rays; yaw is physical, pitch/roll are locked for arcade stability and represented visually. Elevation validation can revise this explicitly when introduced.
+- Physics advances at 60 Hz with a bounded real-time accumulator; input actions (pause/recover) use events so short keypresses cannot be missed between frames.
+- No physical-controller or subjective fun claim is inferred from synthetic Gamepad API tests.

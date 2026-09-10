@@ -1,0 +1,18 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import RAPIER from '@dimforge/rapier3d-compat';
+import { Vehicle } from '../src/vehicle.ts';
+import { STEP } from '../src/config.ts';
+import { trackPoint, nearestAnchor, TRACK_LENGTH } from '../src/track.ts';
+await RAPIER.init();
+const idle={throttle:0,brake:0,steer:0,handbrake:false,boost:false};
+function setup(){const w=new RAPIER.World({x:0,y:-9.81,z:0});w.timestep=STEP;w.createCollider(RAPIER.ColliderDesc.cuboid(1000,.2,1000).setTranslation(0,-.2,0));const car=new Vehicle(w);function tick(seconds:number,input=idle){for(let i=0;i<seconds/STEP;i++){car.step(input,STEP);w.step();car.afterStep();}}tick(1);return {w,car,tick};}
+
+test('suspension settles, throttle accelerates, brakes stop before reverse',()=>{const {w,car,tick}=setup();try{assert.equal(car.contacts,4);assert.ok(car.body.translation().y>.5);tick(3,{...idle,throttle:1});assert.ok(car.speed>15);const initial=car.speed;tick(.5,{...idle,brake:1});assert.ok(car.speed<initial-4);tick(4,{...idle,brake:1});assert.ok(car.body.linvel().z>0,'reverse after holding brake at standstill');}finally{w.free();}});
+test('boost spends Flow and increases acceleration',()=>{const a=setup(),b=setup();try{a.tick(2,{...idle,throttle:1});b.tick(2,{...idle,throttle:1});a.tick(.6,{...idle,throttle:1});b.tick(.6,{...idle,throttle:1,boost:true});assert.ok(b.car.speed>a.car.speed+1);assert.ok(b.car.flow<a.car.flow-8);assert.ok(b.car.flow>=0);}finally{a.w.free();b.w.free();}});
+test('handbrake holding earns no drift Flow; released controlled slide does',()=>{const {w,car,tick}=setup();try{tick(2,{...idle,throttle:1});const before=car.flow;tick(.65,{...idle,throttle:1,steer:1,handbrake:true});assert.ok(car.flow<=before);const sliding=car.flow;tick(.2,{...idle,throttle:1,steer:1});assert.ok(car.flow>sliding,'controlled slide charges Flow');}finally{w.free();}});
+test('hard wall contact damages integrity; recovery and restart reset motion/resources',()=>{const {w,car,tick}=setup();try{w.createCollider(RAPIER.ColliderDesc.cuboid(20,3,.5).setTranslation(64,1,40));tick(4,{...idle,throttle:1});assert.ok(car.integrity<100);const health=car.integrity;car.recover();assert.equal(car.integrity,health);assert.equal(car.penalty,3);assert.equal(car.body.linvel().z,0);car.restart();assert.equal(car.flow,25);assert.equal(car.integrity,100);assert.equal(car.penalty,0);assert.equal(car.recoveries,0);}finally{w.free();}});
+test('fixed track wraps continuously and anchors stay on the road',()=>{const a=trackPoint(0),b=trackPoint(TRACK_LENGTH);assert.deepEqual(a,b);for(let s=0;s<TRACK_LENGTH;s+=5){const p=trackPoint(s),next=trackPoint(s+.1);assert.ok(Math.hypot(next.x-p.x,next.z-p.z)<.101);assert.ok(nearestAnchor(p.x,p.z).distance<3);}});
+
+test('airborne vehicle cannot earn drift Flow or boost; landing returns wheel contact',()=>{const {w,car,tick}=setup();try{car.body.setTranslation({x:64,y:5,z:70},true);car.body.setLinvel({x:0,y:0,z:-15},true);tick(.2,{...idle,throttle:1,steer:1,boost:true});assert.equal(car.grounded,false);assert.equal(car.boosting,false);assert.equal(car.drifting,false);tick(2);assert.equal(car.contacts,4);assert.ok(Number.isFinite(car.speed));}finally{w.free();}});
+test('empty Flow disables boost; a wreck cannot recover until a fresh session',()=>{const {w,car,tick}=setup();try{tick(2,{...idle,throttle:1});car.flow=0;tick(.3,{...idle,throttle:1,boost:true});assert.equal(car.boosting,false);assert.equal(car.flow,0);car.integrity=0;car.recover();assert.equal(car.recoveries,0);car.restart();assert.equal(car.integrity,100);assert.equal(car.flow,25);}finally{w.free();}});
