@@ -10,3 +10,5 @@
 - Commands: `npm ci`, `npm run dev`, `npm run build`, `npm test`. With dev server on port 5173 and Chrome installed: `npm run test:browser`, `npm run test:lap`.
 - Validation (2026-09-10): production build passed; 7 physics/track tests passed; Chrome exercised keyboard acceleration/drift/boost, rapid R/Esc, frozen pause and restart; simulated Gamepad API exercised analog throttle, steering and Start debounce; completed a full lap in 33.53s at 100 integrity, no recoveries; title/driving/lap screenshots inspected. Vite reports the known large Rapier bundle warning.
 - Runtime: local dev server on http://127.0.0.1:5173 during implementation. Restart it if no longer running.
+
+- M2.1 completed: authored module data, seeded bounded assembly and socket/grade validation. 10 tests and 1,000-seed / 32,000-module stress test passed. Rendering integration is next.

@@ -14,3 +14,5 @@
 - Fixed short R/Esc presses missed between animation frames; single actions now use keydown events.
 - Added 7 physics/track regression tests and reproducible Chrome keyboard/gamepad/lap checks. Completed a full lap with no damage.
 - Reviewed project Markdown, corrected state/blocker descriptions and documented startup and limitations.
+
+- M2.1: Added 11 authored road profiles, independent deterministic random streams, socket validation and reproducible 1,000-seed stress command.

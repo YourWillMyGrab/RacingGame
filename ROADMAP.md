@@ -27,3 +27,5 @@ Status values: TODO / IN_PROGRESS / DONE / BLOCKED
 | M1.5 | User accepted starting prototype; physical controller remains a known limitation | DONE |
 
 M2 authorized by user after accepting the prototype. Physical controller testing remains pending.
+
+| M2.1 | Authored modules, seeded assembly and stress validation | DONE |
