@@ -12,3 +12,5 @@
 - Suspension uses four downward Rapier rays; yaw is physical, pitch/roll are locked for arcade stability and represented visually. Elevation validation can revise this explicitly when introduced.
 - Physics advances at 60 Hz with a bounded real-time accumulator; input actions (pause/recover) use events so short keypresses cannot be missed between frames.
 - No physical-controller or subjective fun claim is inferred from synthetic Gamepad API tests.
+
+- 2026-09-10: User accepted the initial prototype and authorized proceeding. M1 handling gate is accepted for continued development; physical-controller testing remains a known limitation, not an approval blocker. Preserve the fixed lab while adding modular roads.

@@ -5,8 +5,8 @@ Status values: TODO / IN_PROGRESS / DONE / BLOCKED
 | Milestone | Description | Status |
 |---|---|---|
 | 0 | Project skeleton | DONE |
-| 1 | Driving prototype | IN_PROGRESS |
-| 2 | Modular road | TODO |
+| 1 | Driving prototype | DONE |
+| 2 | Modular road | IN_PROGRESS |
 | 3 | One complete race | TODO |
 | 4 | Roguelike slice | TODO |
 | 5 | Procedural world loop | TODO |
@@ -24,6 +24,6 @@ Status values: TODO / IN_PROGRESS / DONE / BLOCKED
 | M1.2 | Drift, Flow/boost, integrity and safe recovery | DONE |
 | M1.3 | Chase camera, session screens, laps, HUD and tuning | DONE |
 | M1.4 | Physics regression tests and actual Chrome control/lap checks | DONE |
-| M1.5 | Human handling acceptance and physical-controller validation | IN_PROGRESS |
+| M1.5 | User accepted starting prototype; physical controller remains a known limitation | DONE |
 
-M2 remains TODO until the M1 handling gate is satisfied. Synthetic controller tests are not physical hardware validation.
+M2 authorized by user after accepting the prototype. Physical controller testing remains pending.
