@@ -2,7 +2,7 @@
 
 - Current stable milestone: Milestone 4 — Roguelike slice DONE.
 - Current stable micro-milestone: M4.2 — complete three-event coastal run, one-of-three rewards, keyboard/controller selection, victory and clean new-run reset.
-- Last known working commit: latest `feat: complete three-event roguelike driving slice`; exact hash recorded by the following documentation checkpoint. M4 data baseline: 48653d9.
+- Last known working commit: e90fe92 (`feat: complete three-event roguelike driving slice`). A following documentation-only checkpoint records this hash.
 - What works: M0–M3 driving/modular roads/six-car races; 14 data-defined upgrades, six rarity categories, placement-weighted seeded choices, temporary vehicle hooks/settings, resource carryover, three-event run results, reward navigation and full reset. Fixed lab, solo route and standalone race remain available through URL modes.
 - Validation: 22 automated tests pass; production build passes. Full Chrome run test passed: events completed in 45.82s / 67.83s / 64.53s, placements 1st / 5th / 1st, total 178.18s, final integrity 82.69. Tested real R recovery before a missed checkpoint, low-placement penalty/reward rarity, keyboard and simulated-controller choices, victory and reset to no upgrades / integrity 100 / Flow 25. Reward and victory screenshots inspected. Earlier 1,000-seed / 32,000-module stress, original keyboard/gamepad controls, modular full route and standalone six-car race also passed.
 - Fixed during validation: Result stop counted as impact; Flow decayed during countdown; airborne progress could skip a checkpoint; recovery beyond a missed gate did not return to it. Added regressions and completed final browser check after fixes.
