@@ -1,13 +1,13 @@
 # Known Issues
 
-- Physical gamepad hardware has not been tested; standard Gamepad API throttle, steering and pause were tested with simulated device data in Chrome. Nonstandard controller mappings are not supported.
-- User accepted the starting handling; physical controller validation remains pending.
-- Fixed Driving Lab remains flat; modular road adds gentle elevation, tunnels and bridges. Jump gaps and complex banking remain future content. Pitch/roll remain assisted/visual.
-- Visual assets are simple original prototype geometry. Audio, tire smoke, advanced lighting and visual polish are not implemented.
-- Rapier compatibility/WASM bundle causes a Vite chunk warning (~3.4 MB JavaScript, ~1.23 MB gzip). Startup/performance optimization is still pending; a single local FPS sample is not a performance certification.
-- Automated browser scripts require Chrome and a dev server specifically at 127.0.0.1:5173. Timed input tests assume the machine can run the scene without severe stalls.
-- No Git remote configured; local development and commits work. No off-device backup was created.
-
-- M2 generator intentionally advances within a bounded heading corridor to prohibit self-intersections. Hairpins, forks, shortcuts and branch validation are not implemented. Geometry is streamed but lightweight route metadata is generated upfront (bounded to 128 modules).
-
-- AI uses a lightweight passing-line heuristic; deliberate defense, drafting and richer personalities remain future tuning. Cars that finish are ghosted against other cars so they cannot block the finish.
+- This is the M4 coastal slice: three short Road Races, two reward selections, temporary upgrades and run end/reset. It is not the complete three-biome 20–30 minute MVP.
+- Physical forks, alternate routes, seamless event continuation, time attack/bosses, further biomes, jump gaps and richer banking are not implemented yet.
+- Between races the result/reward screen rebuilds the next seeded road; seamless progression is a future M5 task.
+- Physical gamepad hardware is untested. Standard Gamepad API throttle/steering/pause and reward selection were tested with simulated hardware; nonstandard mappings are unsupported.
+- AI uses a lightweight passing-line heuristic. Contact can block a car and require recovery; richer avoidance/defense, drafting and balance remain work for later slices. Finished cars retain road collision and ignore other cars so they cannot block the finish.
+- The route generator intentionally stays inside a forward heading corridor to prevent self-intersections. Metadata is generated upfront, bounded to 128 modules; render and physics chunks are streamed. Unsupported forks are explicitly excluded from the stress-test claim.
+- Suspension uses four Rapier rays, while body pitch/roll are locked and visually assisted. Gentle elevation is tested, but large jumps and complex landings still need authored browser content.
+- Art is simple original prototype geometry. Audio, tire smoke, weather, rich lighting and final visual polish remain outstanding.
+- Vite reports the large Rapier/WASM shared chunk (~3.4 MB JavaScript, ~1.23 MB gzip). Performance and startup optimization remain outstanding; local FPS is not a hardware certification.
+- Browser tests require Chrome and the dev server on 127.0.0.1:5173. The full-run test uses a virtual clock and a simulated driver that uses the actual R recovery action when blocked.
+- No remote Git origin is configured; local development and commits work, but no off-device backup was created.

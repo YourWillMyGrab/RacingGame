@@ -97,12 +97,15 @@ export class Vehicle {
     const drag=(t.rollingDrag+t.drag*this.speed)*t.mass;
     this.body.addForce({x:-v.x*drag,y:0,z:-v.z*drag},true);
     this.cooldown=Math.max(0,this.cooldown-dt); this.impact*=Math.exp(-dt*5);
+    // Progress follows the road corridor in the air too; only safe recovery
+    // anchors require wheel contact. Otherwise a crest could skip a race gate.
+    const anchor=this.route.nearest(p.x,p.z,this.progress);
+    if(anchor.distance<anchor.width/2-2)this.progress=anchor.s;
     if(this.grounded) {
       if(this.airTime>.3)this.events.emit('landing',{car:this,dt,amount:this.airTime,input});
       if(this.airTime>.3 && v.y < -6) this.damage((-v.y-6)*t.damageScale);
       this.airTime=0;
-      const anchor=this.route.nearest(p.x,p.z,this.progress);
-      if(anchor.distance<anchor.width/2-2) {this.progress=anchor.s;if(this.speed>2)this.lastAnchor=anchor.s;}
+      if(anchor.distance<anchor.width/2-2 && this.speed>2)this.lastAnchor=anchor.s;
     } else this.airTime+=dt;
     if(p.y < -8) this.recover();
     this.previousSpeed=this.speed;

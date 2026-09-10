@@ -8,6 +8,8 @@ import { Vehicle } from './vehicle';
 import { createCar } from './car';
 import { STEP } from './config';
 import { Race, IDLE } from './race';
+import { Run } from './run';
+import { UPGRADES, buildSettings, attachBuild } from './upgrades';
 
 export async function startGame() {
   await RAPIER.init();
@@ -18,9 +20,10 @@ export async function startGame() {
   const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.toneMapping=THREE.ACESFilmicToneMapping;
   const app=document.querySelector('#app')!;
   const solo=new URLSearchParams(location.search).has('solo');
+  const campaign=!solo&&!new URLSearchParams(location.search).has('race');
   app.innerHTML=`<header class="brand">VELOCITY<span> / </span>ROGUE<small>01 — NEON COAST / ${solo?'MODULAR ROADS':'ROAD RACE'}</small></header>
     <div class="session"><span id="objective">${solo?'ATTRAVERSA LA COSTA':'GARA SU STRADA · 6 PILOTI'}</span><strong id="time">00:00.0</strong><small id="seed-label"></small></div><div id="position" class="race-position"></div>
-    <div id="cue"></div><div class="route-progress"><div id="progress-bar"></div></div>
+    <div id="cue"></div><div class="route-progress"><div id="progress-bar"></div></div><div id="build-hud" class="build-hud"></div>
     <section class="telemetry"><div class="speed"><strong id="speed">000</strong><span>KM/H</span></div><div class="resources"><label>FLOW <b id="flow-value">25</b></label><meter id="flow" max="100" value="25"></meter><label>INTEGRITÀ <b id="health-value">100</b></label><meter id="health" max="100" value="100"></meter></div></section>
     <div class="controls">WASD <span>guida</span> &nbsp; SPAZIO <span>deriva</span> &nbsp; SHIFT <span>boost</span> &nbsp; R <span>recupero +3s</span> &nbsp; ESC <span>pausa</span></div>
     <details id="dev"><summary>TELEMETRIA / PERCORSO</summary><pre id="debug"></pre><label class="setting"><input type="checkbox" id="anchors"> Mostra socket e ancore</label><label class="setting"><input type="checkbox" id="shake" checked> Camera stabile</label><a href="/?lab=1">Apri Driving Lab / tuning</a></details>
@@ -30,44 +33,63 @@ export async function startGame() {
   const input=new Input(),camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,900),car=createCar();scene.add(car.root);
   let world:RAPIER.World,route:ModularRoute,stream:RoadStream,vehicle:Vehicle;
   let race:Race|undefined;
+  let run:Run|undefined,detachBuild=()=>{},selectedReward=0;
   const rivals:ReturnType<typeof createCar>[]=[];
-  let state:'title'|'driving'|'paused'|'finished'|'wrecked'='title',elapsed=0,last=performance.now(),accumulator=0,fps=60,started=false;
+  let state:'title'|'driving'|'paused'|'finished'|'wrecked'|'reward'='title',elapsed=0,last=performance.now(),accumulator=0,fps=60,started=false;
   const cameraTarget=new THREE.Vector3(),look=new THREE.Vector3();
-  function load(seed:string) {
+  function load(seed:string,continueRun=false) {
+    detachBuild();
+    if(campaign&&!continueRun)run=new Run(seed);
     for(const model of rivals){scene.remove(model.root);model.root.traverse(object=>{if(object instanceof THREE.Mesh){object.geometry.dispose();for(const m of Array.isArray(object.material)?object.material:[object.material])m.dispose();}});}rivals.length=0;
     if(stream)stream.dispose();if(world)world.free();
     world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=STEP;
-    route=new ModularRoute(seed,24);stream=new RoadStream(route,scene,world);stream.update(route.start);
-    vehicle=new Vehicle(world,route);elapsed=0;accumulator=0;started=false;
+    route=new ModularRoute(run?.routeSeed??seed,run?.moduleCount??24);stream=new RoadStream(route,scene,world);stream.update(route.start);
+    vehicle=new Vehicle(world,route,buildSettings(run?.owned??[]));elapsed=0;accumulator=0;started=false;
+    if(run){vehicle.integrity=run.integrity;vehicle.flow=run.flow;detachBuild=attachBuild(vehicle,run.owned);}
     race=solo?undefined:new Race(route,world,vehicle);
     for(const racer of race?.racers.slice(1)??[]){const model=createCar(racer.color);rivals.push(model);scene.add(model.root);}
-    const url=new URL(location.href);url.searchParams.set('seed',route.seed);history.replaceState(null,'',url);
-    $('seed-label').textContent=`SEED ${route.seed}`;
+    const url=new URL(location.href);url.searchParams.set('seed',run?.seed??route.seed);history.replaceState(null,'',url);
+    $('seed-label').textContent=`SEED ${run?.seed??route.seed}`;
+    $('objective').textContent=run?`GARA ${run.event+1} / ${run.totalEvents} · NEON COAST`:solo?'ATTRAVERSA LA COSTA':'GARA SU STRADA · 6 PILOTI';
+    $('build-hud').textContent=run?.owned.map(id=>UPGRADES.find(u=>u.id===id)!.name).join(' / ')??'';
   }
   const finish=()=>route.chunks.at(-1)!.start+30;
   function start() {state='driving';$('overlay').hidden=true;input.clear();}
   function title() {
     state='title';$('overlay').hidden=false;
-    $('overlay').innerHTML=`<article><p class="eyebrow">NEON COAST / ${solo?'PERCORSO DA SEED':'SEI PILOTI. UN ARRIVO.'}</p><h1>Oltre la<br>prossima curva.</h1><p>${solo?'Una strada nuova a ogni seed.':'Cinque rivali, una strada nuova a ogni seed.'} Curve, ponti e tunnel lungo la costa. Conserva l’integrità, carica Flow con la deriva e conquista l’arrivo.</p><label class="seed-input">SEED DEL PERCORSO<input id="seed-input" maxlength="24" value="${route.seed}" spellcheck="false"></label><button id="start">PARTI <span>↗</span></button><button id="new-seed" class="secondary">Genera un nuovo seed</button><p class="hint">WASD guida · Spazio deriva · Shift boost<br>Controller: RT/LT · stick · A deriva · B/RB boost</p></article>`;
-    $('start').onclick=()=>{const seed=normalizeSeed($<HTMLInputElement>('seed-input').value);if(seed!==route.seed)load(seed);start();};
+    $('overlay').innerHTML=`<article><p class="eyebrow">NEON COAST / ${campaign?'TRE GARE. UNA SOLA MACCHINA.':solo?'PERCORSO DA SEED':'SEI PILOTI. UN ARRIVO.'}</p><h1>Oltre la<br>prossima curva.</h1><p>${campaign?'Affronta tre gare, scegli i potenziamenti e trasforma la tua auto. L’integrità e il Flow ti accompagnano fino alla fine.':solo?'Una strada nuova a ogni seed.':'Cinque rivali, una strada nuova a ogni seed.'} Conserva l’integrità, carica Flow con la deriva e conquista l’arrivo.</p><label class="seed-input">SEED DEL PERCORSO<input id="seed-input" maxlength="24" value="${run?.seed??route.seed}" spellcheck="false"></label><button id="start">PARTI <span>↗</span></button><button id="new-seed" class="secondary">Genera un nuovo seed</button><p class="hint">WASD guida · Spazio deriva · Shift boost<br>Controller: RT/LT · stick · A deriva · B/RB boost</p></article>`;
+    $('start').onclick=()=>{const seed=normalizeSeed($<HTMLInputElement>('seed-input').value);if(seed!==(run?.seed??route.seed))load(seed);start();};
     $('new-seed').onclick=()=>{load(freshSeed());title();};
   }
   function overlay(kind:'paused'|'finished'|'wrecked') {
     state=kind;$('overlay').hidden=false;
-    const heading=kind==='paused'?'Un respiro.':kind==='finished'?(race?`${race.position}° all’arrivo.`:'Costa attraversata.'):'Fine corsa.';
+    const heading=kind==='paused'?'Un respiro.':kind==='finished'?(run?.phase==='complete'?'Costa conquistata.':race?`${race.position}° all’arrivo.`:'Costa attraversata.'):'Fine corsa.';
     const standings=race && kind!=='paused'?'<ol id="standings" class="standings"></ol>':'';
-    $('overlay').innerHTML=`<article><p class="eyebrow">NEON COAST / SEED ${route.seed}</p><h1>${heading}</h1><p>${kind==='paused'?'Il percorso ti aspetta.':`${Math.round(elapsed+(race?0:vehicle.penalty))} secondi · integrità ${Math.ceil(vehicle.integrity)}% · ${vehicle.recoveries} recuperi`}</p>${standings}${kind==='paused'?'<button id="resume">RIPRENDI ↗</button>':''}<button id="restart" class="${kind==='paused'?'secondary':''}">RIPROVA QUESTO SEED</button><button id="menu" class="secondary">Scegli un altro percorso</button></article>`;
+    $('overlay').innerHTML=`<article><p class="eyebrow">NEON COAST / SEED ${run?.seed??route.seed}</p><h1>${heading}</h1><p>${kind==='paused'?'Il percorso ti aspetta.':`${Math.round(elapsed+(race?0:vehicle.penalty))} secondi · integrità ${Math.ceil(vehicle.integrity)}% · ${vehicle.recoveries} recuperi`}${run?.phase==='complete'?`<br>3 gare completate · ${Math.round(run.elapsed)} s totali · ${run.owned.length} potenziamenti temporanei`:''}</p>${standings}${kind==='paused'?'<button id="resume">RIPRENDI ↗</button>':''}${kind==='finished'&&run?.phase==='reward'?'<button id="claim-reward">SCEGLI UN POTENZIAMENTO ↗</button>':''}<button id="restart" class="${kind==='paused'||run?.phase==='reward'?'secondary':''}">${run?'NUOVA RUN CON QUESTO SEED':'RIPROVA QUESTO SEED'}</button><button id="menu" class="secondary">Scegli un altro percorso</button></article>`;
     if(kind==='paused')$('resume').onclick=start;
-    $('restart').onclick=()=>{load(route.seed);start();};
-    $('menu').onclick=()=>{load(route.seed);title();};
+    if($('claim-reward'))$('claim-reward').onclick=showRewards;
+    $('restart').onclick=()=>{load(run?.seed??route.seed);start();};
+    $('menu').onclick=()=>{load(run?.seed??route.seed);title();};
   }
-  input.onPause=()=>{if(state==='driving')overlay('paused');else if(state==='paused')start();else if(state==='title')$('start').click();else $('restart').click();};
+  function showRewards() {
+    if(!run || run.phase!=='reward')return;
+    state='reward';selectedReward=0;
+    $('overlay').innerHTML=`<article class="reward-screen"><p class="eyebrow">GARA ${run.event+1} COMPLETATA / SEED ${run.seed}</p><h1>La prossima versione di te.</h1><p>Scegli 1 potenziamento. ${run.results.at(-1)!.position<=3?'+8 integrità tra le gare.':'−8 integrità per il piazzamento; ricompense di rarità ridotta.'}<br>Build attuale: ${run.owned.map(id=>UPGRADES.find(u=>u.id===id)!.name).join(' / ')||'Auto base'}</p><div class="reward-grid">${run.offers.map((u,i)=>`<button class="reward-card rarity-${u.rarity}" data-reward="${i}"><small>${i+1} / ${u.rarity.toUpperCase()}</small><strong>${u.name}</strong><p>${u.description}</p>${u.downside?`<p class="downside">${u.downside}</p>`:''}<em>${u.tags.join(' / ')}</em></button>`).join('')}</div><p class="hint">1 / 2 / 3 oppure ← → e Invio · Controller: D-pad e A</p></article>`;
+    document.querySelectorAll<HTMLButtonElement>('[data-reward]').forEach(button=>button.onclick=()=>chooseReward(Number(button.dataset.reward)));
+    highlightReward();
+  }
+  function highlightReward(){document.querySelectorAll('[data-reward]').forEach((button,i)=>button.classList.toggle('selected',i===selectedReward));}
+  function chooseReward(index:number){if(state!=='reward'||!run?.offers[index])return;run.choose(run.offers[index].id);load(run.seed,true);start();}
+  input.onNavigate=direction=>{if(state==='reward'){selectedReward=(selectedReward+direction+3)%3;highlightReward();}};
+  input.onChoice=chooseReward;
+  input.onConfirm=()=>{if(state==='reward')chooseReward(selectedReward);else if(state==='title')$('start').click();else if(state==='finished')($('claim-reward')??$('restart')).click();else if(state==='wrecked')$('restart').click();};
+  input.onPause=()=>{if(state==='driving')overlay('paused');else if(state==='paused')start();else input.onConfirm();};
   input.onRecover=()=>{if(state==='driving'){if(race){if(race.started)race.recover();}else vehicle.recover();}};
   const pauseIfDriving=()=>{if(state==='driving')overlay('paused');};
   window.addEventListener('blur',pauseIfDriving);document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseIfDriving();});
   load(new URLSearchParams(location.search).get('seed')??'7F2C-A91D');title();
   window.addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});
-  if(import.meta.env.DEV)Object.defineProperty(window,'__roadGame',{get:()=>({state,seed:route.seed,progress:vehicle.progress,finish:finish(),elapsed,speed:vehicle.speed,integrity:vehicle.integrity,flow:vehicle.flow,contacts:vehicle.contacts,position:{...vehicle.body.translation()},yaw:vehicle.yaw,activeChunks:stream.active.size,createdChunks:stream.created,unloadedChunks:stream.unloaded,colliders:world.colliders.len(),recoveries:vehicle.recoveries,module:route.moduleAt(vehicle.progress).definition.id,race:race?{countdown:race.countdown,position:race.position,checkpoint:race.player.checkpoint,order:race.order.map(r=>({...r})),racers:race.racers.map(r=>({id:r.id,progress:r.vehicle.progress,integrity:r.vehicle.integrity,finish:r.finishTime}))}:null})});
+  if(import.meta.env.DEV)Object.defineProperty(window,'__roadGame',{get:()=>({state,seed:route.seed,moduleCount:route.chunks.length,progress:vehicle.progress,finish:finish(),elapsed,speed:vehicle.speed,integrity:vehicle.integrity,flow:vehicle.flow,contacts:vehicle.contacts,position:{...vehicle.body.translation()},yaw:vehicle.yaw,activeChunks:stream.active.size,createdChunks:stream.created,unloadedChunks:stream.unloaded,colliders:world.colliders.len(),recoveries:vehicle.recoveries,module:route.moduleAt(vehicle.progress).definition.id,run:run?{seed:run.seed,event:run.event,phase:run.phase,owned:[...run.owned],offers:run.offers.map(u=>u.id),elapsed:run.elapsed}:null,race:race?{countdown:race.countdown,position:race.position,checkpoint:race.player.checkpoint,order:race.order.map(r=>({...r})),racers:race.racers.map(r=>({id:r.id,progress:r.vehicle.progress,integrity:r.vehicle.integrity,finish:r.finishTime}))}:null})});
   renderer.setAnimationLoop(()=>{
     const now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;fps+=(1/Math.max(.001,dt)-fps)*.05;
     const controls=input.sample();
@@ -76,8 +98,8 @@ export async function startGame() {
     if(state==='driving') {
       accumulator+=dt;
       while(accumulator>=STEP){if(race){race.step(controls,STEP);elapsed=race.elapsed;}else{vehicle.step(controls,STEP);world.step();vehicle.afterStep();elapsed+=STEP;}accumulator-=STEP;
-        if(vehicle.integrity<=0){overlay('wrecked');break;}
-        if(race?race.player.finishTime!==null:vehicle.progress>=finish()){overlay('finished');break;}
+        if(vehicle.integrity<=0){if(run)run.finish(race!.position,elapsed,0,vehicle.flow);overlay('wrecked');break;}
+        if(race?race.player.finishTime!==null:vehicle.progress>=finish()){if(run)run.finish(race!.position,race!.player.finishTime!,vehicle.integrity,vehicle.flow);overlay('finished');break;}
       }
     } else if(state==='finished' && race && race.order.length<6 && race.elapsed<(race.player.finishTime??0)+30) {
       accumulator+=dt;
@@ -106,6 +128,7 @@ export async function startGame() {
     $('cue').classList.toggle('active',vehicle.boosting||vehicle.drifting);
     if(race && !race.started)$('cue').textContent=state==='driving'?`${Math.ceil(race.countdown)} · PREPARATI`:'SEI PILOTI. UN ARRIVO.';
     else if(race && race.player.hold>0)$('cue').textContent=`RECUPERO · ${race.player.hold.toFixed(1)} S`;
+    else if(race && race.player.finishTime===null && vehicle.progress>race.player.checkpoint+8)$('cue').textContent='CHECKPOINT SALTATO · R / Y PER RECUPERARE';
     if($<HTMLDetailsElement>('dev').open)$('debug').textContent=`${fps.toFixed(0)} FPS · ${renderer.info.render.calls} draw calls\n${stream.active.size}/${route.chunks.length} chunks · ${world.bodies.len()} bodies\n${world.colliders.len()} colliders · queue 0\nLoaded ${stream.created} · unloaded ${stream.unloaded}\n${route.moduleAt(vehicle.progress).definition.id}\n${vehicle.contacts}/4 contacts · ${input.device}`;
   });
 }

@@ -33,3 +33,7 @@ test('drift/Flow, heavy impact and low-integrity power builds produce different 
   detach();assert.equal(car.events.size,0);car.power=1;car.events.emit('tick',{car,dt:1,amount:0,input:IDLE});assert.equal(car.power,1);
  }finally{world.free();}
 });
+
+test('wrecked run gives no reward and resets to the same base; long seeds still have distinct event roads',()=>{
+ const run=new Run('ABCDEFGHIJKLMNOPQRSTUVWX');const first=run.routeSeed;run.finish(1,10,80,20);run.choose(run.offers[0].id);assert.notEqual(run.routeSeed,first);run.finish(6,20,0,0);assert.equal(run.phase,'failed');assert.deepEqual(run.offers,[]);assert.throws(()=>run.choose('armor'));run.reset();assert.equal(run.routeSeed,first);assert.equal(run.integrity,100);assert.deepEqual(run.owned,[]);
+});

@@ -1,4 +1,4 @@
-import { normalizeSeed } from './road/seed';
+import { normalizeSeed, randomStream } from './road/seed';
 import { rewardChoices, type Upgrade } from './upgrades';
 export class Run {
   readonly seed:string;
@@ -12,7 +12,7 @@ export class Run {
   offers:Upgrade[]=[];
   results:{position:number;time:number}[]=[];
   constructor(seed:string){this.seed=normalizeSeed(seed);}
-  get routeSeed(){return `${this.seed}-E${this.event+1}`;}
+  get routeSeed(){return `${Math.floor(randomStream(this.seed,`event-road:${this.event}`)()*4294967296).toString(16).padStart(8,'0').toUpperCase()}-E${this.event+1}`;}
   get moduleCount(){return 12+this.event*2;}
   finish(position:number,time:number,integrity:number,flow:number) {
     if(this.phase!=='race')throw new Error('Event already resolved');

@@ -1,13 +1,13 @@
 # Project State
 
-- Current stable milestone: Milestone 2 — Modular road DONE. M1 user accepted for continuation; physical gamepad validation remains a known limitation.
-- Current stable micro-milestone: M2.2 — streamed seeded road and browser integration.
-- Last known working commit: next `feat: drive streamed seeded roads` commit; M2 data baseline 3b14a06.
-- Works: Original Driving Lab at /?lab=1; default seeded point-to-point route with curves, crests, tunnels, bridges, start/finish, seed entry/replay, streaming collision/render chunks, road-aware unoccupied recovery anchors and debug visualization.
-- Incomplete: M3 six-car race and later roguelike/world systems. No forks or jumps yet.
-- Exact next action: Implement M3 six-car race using the modular route and same physical vehicle model, countdown/checkpoints/results/restart; verify before reward systems.
-- Blockers: None.
-- Commands: npm ci; npm run dev; npm run build; npm test; npm run test:stress -- 1000. With Chrome + dev server: npm run test:browser; npm run test:lap; npm run test:modular.
-- Validation: 13 tests passed, 1,000-seed stress passed. Original keyboard/gamepad regression passed. Full modular Chrome playtest finished 2,860 m in 109.33s, integrity 100, no recoveries, 24 chunks created / 21 unloaded, 3 remaining; same-seed restart passed. Screenshot inspected.
-
-- M3 completed: full six-car Chrome race and restart passed, 15 tests pass. New stable milestone M3; next action M4 temporary build/rewards. Baseline M2 commit 5bb3894; see next feat: add six-car checkpoint racing commit.
+- Current stable milestone: Milestone 4 — Roguelike slice DONE.
+- Current stable micro-milestone: M4.2 — complete three-event coastal run, one-of-three rewards, keyboard/controller selection, victory and clean new-run reset.
+- Last known working commit: latest `feat: complete three-event roguelike driving slice`; exact hash recorded by the following documentation checkpoint. M4 data baseline: 48653d9.
+- What works: M0–M3 driving/modular roads/six-car races; 14 data-defined upgrades, six rarity categories, placement-weighted seeded choices, temporary vehicle hooks/settings, resource carryover, three-event run results, reward navigation and full reset. Fixed lab, solo route and standalone race remain available through URL modes.
+- Validation: 22 automated tests pass; production build passes. Full Chrome run test passed: events completed in 45.82s / 67.83s / 64.53s, placements 1st / 5th / 1st, total 178.18s, final integrity 82.69. Tested real R recovery before a missed checkpoint, low-placement penalty/reward rarity, keyboard and simulated-controller choices, victory and reset to no upgrades / integrity 100 / Flow 25. Reward and victory screenshots inspected. Earlier 1,000-seed / 32,000-module stress, original keyboard/gamepad controls, modular full route and standalone six-car race also passed.
+- Fixed during validation: Result stop counted as impact; Flow decayed during countdown; airborne progress could skip a checkpoint; recovery beyond a missed gate did not return to it. Added regressions and completed final browser check after fixes.
+- Incomplete: M5 physical forks, alternate routes, second event type and seamless event/world continuation; M6 biome dressing, hazards and boss; M7 full three-biome target; M8–M9 depth/balance/polish. This short coastal slice is not the full 20–30 minute MVP.
+- Exact next recommended action: On the next authorized step, begin M5.1 with one validated physical fork/merge and route-specific event choice, preserving M4 tests. The user asked to finish the current step; no M5 work started in this pass.
+- Known blockers: None for local development. Physical controller hardware validation and performance/art/audio work remain documented limitations.
+- Commands: npm ci; npm run dev; npm run build; npm test; npm run test:stress -- 1000. With Chrome and dev server at 127.0.0.1:5173: npm run test:browser; npm run test:lap; npm run test:modular; npm run test:race; npm run test:run.
+- Runtime: Default / is the three-event run; /?race=1 standalone race; /?solo=1 modular solo; /?lab=1 fixed tuning lab. Seed is accepted in the menu and URL. Restart dev server if it is no longer running.

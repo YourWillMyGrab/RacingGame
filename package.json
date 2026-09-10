@@ -12,7 +12,8 @@
     "test:lap": "node tests/lap.mjs",
     "test:stress": "tsx tests/stress.ts",
     "test:modular": "node tests/modular.mjs",
-    "test:race": "node tests/race-browser.mjs"
+    "test:race": "node tests/race-browser.mjs",
+    "test:run": "node tests/run-browser.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.20.0",

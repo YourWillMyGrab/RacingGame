@@ -4,12 +4,19 @@ export class Input {
   private padPrevious: boolean[] = [];
   onPause = () => {};
   onRecover = () => {};
+  onConfirm = () => {};
+  onNavigate = (_direction:number) => {};
+  onChoice = (_index:number) => {};
   device = 'Tastiera';
   constructor() {
     window.addEventListener('keydown', e => {
       if (!e.repeat && e.code === 'Escape') { this.onPause(); return; }
+      if (!e.repeat && e.code === 'Enter') { this.onConfirm(); return; }
       if ((e.target as HTMLElement).matches('input,select,textarea')) return;
       if (!e.repeat && e.code === 'KeyR') { this.onRecover(); return; }
+      if(!e.repeat && ['Digit1','Digit2','Digit3'].includes(e.code))this.onChoice(Number(e.code.at(-1))-1);
+      if(!e.repeat && e.code==='ArrowLeft')this.onNavigate(-1);
+      if(!e.repeat && e.code==='ArrowRight')this.onNavigate(1);
       if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
       this.keys.add(e.code);
     });
@@ -25,6 +32,9 @@ export class Input {
       const b = (i: number) => pad.buttons[i]?.pressed ?? false;
       if (b(9) && !this.padPrevious[9]) this.onPause();
       if (b(3) && !this.padPrevious[3]) this.onRecover();
+      if(b(0)&&!this.padPrevious[0])this.onConfirm();
+      if(b(14)&&!this.padPrevious[14])this.onNavigate(-1);
+      if(b(15)&&!this.padPrevious[15])this.onNavigate(1);
       this.padPrevious = pad.buttons.map(b => b.pressed);
       const axis = pad.axes[0] ?? 0;
       if (Math.abs(axis) > .12) result.steer = -Math.sign(axis) * (Math.abs(axis) - .12) / .88;

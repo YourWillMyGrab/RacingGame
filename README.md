@@ -1,27 +1,44 @@
-# Velocity Rogue — Driving Lab
+# Velocity Rogue
 
-Prototipo browser 3D su pista fissa. Prima vertical slice della specifica `ASTRA_RACING_ROGUELIKE_MASTER.md`: guida prima della generazione procedurale.
+Gioco browser 3D in sviluppo: una prima run roguelike di **tre gare sulla costa**, con sei auto, strade modulari da seed e potenziamenti temporanei. La specifica completa rimane `ASTRA_RACING_ROGUELIKE_MASTER.md`.
 
-## Avvio
+## Avvio e verifiche
 
-Richiede Node.js 22.12+ (verificato con Node 24.11) e un browser desktop con WebGL.
+Node.js 22.12+ e browser desktop con WebGL; sviluppo verificato con Node 24.11 e Chrome.
 
 ```sh
 npm ci
 npm run dev
+npm run build
+npm run preview
+npm test
+npm run test:stress -- 1000
 ```
 
 Apri l'indirizzo mostrato da Vite, normalmente http://127.0.0.1:5173.
 
+Con Chrome installato e server di sviluppo attivo sulla porta 5173:
+
 ```sh
-npm run build
-npm run preview
-npm test
 npm run test:browser
 npm run test:lap
+npm run test:modular
+npm run test:race
+npm run test:run
 ```
 
-I due test browser richiedono Google Chrome installato e il server `npm run dev` attivo sulla porta 5173. Usano input reali di tastiera nel browser e un Gamepad API simulato; salvano screenshot in `test-results/` (ignorata da Git). Non sostituiscono il collaudo con un controller fisico. La build produzione non espone la telemetria QA `window.__drivingLab`.
+I test browser salvano screenshot in `test-results/` (ignorata da Git). Usano tastiera reale via Playwright e Gamepad API simulato; il test dell'intera run accelera l'orologio virtuale del browser. Non sostituiscono il collaudo con un controller fisico. La build produzione non espone le proprietà QA `window.__drivingLab` e `window.__roadGame`.
+
+## Modalità
+
+| URL | Modalità |
+|---|---|
+| `/` | Run di tre gare, potenziamenti e reset completo |
+| `/?race=1` | Gara singola a sei auto |
+| `/?solo=1` | Percorso modulare in solitaria |
+| `/?lab=1` | Circuito ovale originale e tuning live |
+
+Inserisci il seed nel menu o aggiungi `seed=7F2C-A91D` ai parametri URL. La stessa versione e seed riproducono strade, rivali e ricompense (a parità di piazzamento e scelte). La run deriva un seed separato per ogni evento. Il circuito di laboratorio è fisso.
 
 ## Controlli
 
@@ -32,46 +49,38 @@ I due test browser richiedono Google Chrome installato e il server `npm run dev`
 | Sterzare | A/D / ←/→ | Stick sinistro |
 | Freno a mano | Spazio | A |
 | Boost | Shift | B / RB |
-| Recupero (+3 secondi) | R | Y |
-| Pausa | Esc | Start |
+| Recupero | R | Y |
+| Pausa / riprendi | Esc | Start |
+| Scegli potenziamento | 1/2/3 oppure ←/→ + Invio | D-pad + A |
+| Conferma avvio/risultati | Invio | A / Start |
 
-La frenata arresta prima la macchina; mantenendola premuta da fermo si innesta la retromarcia. Per generare Flow: inizia la deriva con sterzo e freno a mano, rilascia il freno a mano e mantieni una scivolata controllata con il gas. Tenere premuto il freno a mano non genera Flow. Shift consuma Flow per accelerare. Gli urti forti consumano integrità; a zero la sessione termina. Ricominciare ripristina tutte le risorse. Cambiare finestra mette in pausa.
+La frenata arresta prima l'auto, poi mantenendola premuta da fermo innesta la retromarcia. Inizia la deriva con sterzo e freno a mano, rilascia il freno a mano e controlla il gas per generare Flow. Tenere il freno a mano premuto non genera ricompense. Shift consuma Flow. Gli urti forti riducono l'integrità; a zero la run termina. Cambiare finestra mette in pausa.
 
-Apri **TELEMETRIA / TUNING** per modificare la guida dal vivo. Le regolazioni durano solo fino al ricaricamento della pagina. **Ripristina tuning** ripristina i valori base. La camera stabile è attiva inizialmente.
+In gara, il recupero cerca un punto libero e ferma l'auto per tre secondi, già compresi nel tempo di gara. Nel laboratorio/solo mantiene la penalità originale di +3 secondi.
 
-## Struttura
+## Run e potenziamenti
 
-- `src/config.ts`: parametri centralizzati, unità SI, timestep a 60 Hz.
-- `src/vehicle.ts`: corpo Rapier dinamico, quattro raggi sospensione, grip, sterzo, deriva, Flow, danni e recupero.
-- `src/input.ts`: tastiera e Gamepad API standard con deadzone e azioni singole.
-- `src/track.ts`: pista ovale fissa, collisioni e ancore di recupero. Non è il generatore procedurale.
-- `src/car.ts`: geometria originale del veicolo.
-- `src/main.ts`: sessione, rendering, chase camera e HUD.
-- `tests/`: verifiche fisiche e playtest riproducibili.
+Le prime due gare offrono una scelta fra tre potenziamenti. I primi tre classificati recuperano fino a 8 integrità; i piazzamenti inferiori perdono 8 integrità (resta almeno 1) e ricevono ricompense di rarità ridotta. Integrità e Flow passano alla gara successiva.
 
-La pista è volutamente piatta. Rollio e beccheggio del telaio sono visivi, mentre la fisica consente rotazione sull'asse verticale e movimento verticale con sospensioni. Non ci sono ancora rivali, eventi, upgrade, salti o run roguelike. Vedi `PROJECT_STATE.md` e `KNOWN_ISSUES.md` per lo stato preciso.
+La libreria iniziale comprende 14 potenziamenti, sei categorie di rarità e svantaggi espliciti per le maledizioni. Le direzioni di build comprendono deriva/Flow, massa/impatti e potenza a bassa integrità. Statistiche ed effetti vengono rimossi iniziando una nuova run. Non esiste progressione permanente.
 
-## Modular roads (M2)
+I rivali usano lo stesso modello fisico, con ritmo, linea preferita e aggressività derivati dal seed. Frenano per le curve, cercano una linea di sorpasso e recuperano se bloccati. I checkpoint devono essere attraversati in ordine. Dopo l'arrivo del giocatore, gli altri continuano fino a 30 secondi: la classifica distingue tempi registrati, ritiri, piloti in pista e fuori tempo. Le auto arrivate non bloccano fisicamente gli altri piloti.
 
-The default entry point now loads a point-to-point seeded road; `/?lab=1` preserves the original oval and live tuning. Enter a seed on the title screen or use `?seed=7F2C-A91D` to replay it. The same version and seed reproduce all road geometry. The title, HUD, pause and results show the seed.
+## Architettura
 
-The first module library includes start/finish, straights, left/right sweepers, S-curves, gentle crests, tunnels and bridges. Road profiles are authored data; the generator assembles compatible pieces and shapes challenge/release rhythm. This version intentionally follows a nonintersecting corridor; forks and jumps are later milestones.
+- `src/config.ts`: parametri in unità SI, fisica a 60 Hz.
+- `src/vehicle.ts`: corpo Rapier, quattro raggi sospensione, grip, deriva, Flow, danni, recupero ed eventi.
+- `src/input.ts`: tastiera e controller standard.
+- `src/road/`: profili modulari, socket, seed, validazione, assemblaggio e streaming.
+- `src/race.ts`: griglia, AI, checkpoint e arrivi.
+- `src/events.ts`, `src/upgrades.ts`, `src/run.ts`: hook rimovibili, dati dei potenziamenti e stato temporaneo.
+- `src/game.ts`: rendering, HUD e flusso della run; `src/lab.ts` conserva il laboratorio iniziale.
+- `tests/`: regressioni fisiche/logiche, stress e prove browser riproducibili.
 
-Rendering and collision are loaded ahead and removed behind. The debug panel shows active chunks, colliders, load/unload counts, module IDs, entry sockets and recovery markers. Recovery chooses an unoccupied earlier road anchor. Finish the road to reach results, replay the same seed or choose another.
+Il pannello telemetria mostra chunk, collisioni, caricamenti/scaricamenti, ID dei moduli e ancore/socket. Il tuning è disponibile nel Driving Lab.
 
-```sh
-npm run test:stress -- 1000
-npm run test:modular
-```
+## Limiti attuali
 
-The modular browser test drives the full road using a simulated analog controller, checks unloaded chunks and restarts the same seed. The stress test reports unsupported branches explicitly rather than claiming to validate nonexistent forks.
+Questa è la slice costiera M4, non il gioco completo da 20–30 minuti. Le gare passano attraverso risultati/ricompense e ricreano la strada successiva. Bivi fisici, continuità senza ricostruzione, altri eventi, boss, altri biomi, salti, audio e rifinitura visiva appartengono ai prossimi milestone.
 
-## Six-car racing (M3)
-
-The default route is now a race against five seeded rivals. `/?solo=1` preserves the modular-road test drive and `/?lab=1` the oval. A three-second countdown locks the grid, then every racer uses the same dynamic vehicle model. Rivals have seeded pace, preferred lines and aggression; they brake for corners and choose a passing lane around nearby cars. Stuck recovery returns to an earlier valid anchor and holds the car for three seconds.
-
-Race position uses validated road progress and ordered checkpoints. Recovery is a real three-second hold, already included in race time. Finishes are ordered by crossing time; cars that finish become noncolliding with other racers to keep the finish line clear. Results keep simulating remaining rivals for up to 30 seconds; unfinished racers are explicitly marked rather than assigned invented times. Start on controller resumes or retries from the result screen.
-
-```sh
-npm run test:race
-```
+Le strade avanzano in un corridoio senza autointersezioni: curve, esse, dossi moderati, tunnel e ponti. La geometria e le collisioni vengono caricate davanti e scaricate dietro; i metadati leggeri sono generati in anticipo. Rollio/beccheggio sono assistiti e visivi. Vedi `PROJECT_STATE.md` e `KNOWN_ISSUES.md` per il checkpoint e i limiti precisi.

@@ -5,7 +5,7 @@ await mkdir('test-results',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://127.0.0.1:5173/?seed=7F2C-A91D');await page.click('#start');
+ await page.goto('http://127.0.0.1:5173/?race=1&seed=7F2C-A91D');await page.click('#start');
  let state=await page.evaluate(()=>window.__roadGame);assert.equal(state.race.racers.length,6);assert.ok(state.race.countdown>2);
  await page.screenshot({path:'test-results/race-grid.png'});
  await page.evaluate(async()=>{

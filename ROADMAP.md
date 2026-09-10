@@ -1,6 +1,6 @@
 # Roadmap
 
-Status values: TODO / IN_PROGRESS / DONE / BLOCKED
+Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 
 | Milestone | Description | Status |
 |---|---|---|
@@ -8,28 +8,28 @@ Status values: TODO / IN_PROGRESS / DONE / BLOCKED
 | 1 | Driving prototype | DONE |
 | 2 | Modular road | DONE |
 | 3 | One complete race | DONE |
-| 4 | Roguelike slice | IN_PROGRESS |
-| 5 | Procedural world loop | TODO |
-| 6 | First complete biome | TODO |
-| 7 | Full three-biome run | TODO |
-| 8 | Depth and chaos | TODO |
-| 9 | Polish | TODO |
+| 4 | Roguelike slice | DONE |
+| 5 | Physical forks, route choices, two event types and seamless world loop | TODO |
+| 6 | First dressed biome, boss, hazards and audio/VFX | TODO |
+| 7 | Full three-biome 20–30 minute run | TODO |
+| 8 | Expanded upgrades, chaos, event types and balance | TODO |
+| 9 | Final polish, settings, accessibility and performance | TODO |
 
-## First-pass micro-milestones
+## Completed and active micro-milestones
 
 | Unit | Outcome | Status |
 |---|---|---|
-| M0.1 | Vite/TypeScript/Three.js/Rapier, fixed scene and browser smoke check | DONE |
-| M1.1 | Custom suspension, acceleration, braking/reverse, steering and collision | DONE |
-| M1.2 | Drift, Flow/boost, integrity and safe recovery | DONE |
-| M1.3 | Chase camera, session screens, laps, HUD and tuning | DONE |
-| M1.4 | Physics regression tests and actual Chrome control/lap checks | DONE |
-| M1.5 | User accepted starting prototype; physical controller remains a known limitation | DONE |
+| M0.1 | Vite/TypeScript/Three.js/Rapier, scene, input and browser smoke check | DONE |
+| M1.1 | Suspension, acceleration, braking/reverse, steering and collisions | DONE |
+| M1.2 | Drift, Flow/boost, integrity and recovery | DONE |
+| M1.3 | Chase camera, HUD, lap/session screens and tuning | DONE |
+| M1.4 | Physics regression tests and Chrome control/lap checks | DONE |
+| M1.5 | User acceptance to continue; physical controller remains a known limitation | DONE |
+| M2.1 | Authored modules, sockets, seeded assembly and 1,000-seed stress validation | DONE |
+| M2.2 | Streamed drivable geometry, seed UI, safe recovery, debug and full-route playtest | DONE |
+| M3.1 | Six physical cars, AI, countdown, checkpoints, ordered results and restart | DONE |
+| M3.2 | Preserve post-finish integrity and resources during countdown | DONE |
+| M4.1 | Temporary run state, 14 upgrades, rarity and removable event hooks | DONE |
+| M4.2 | Three-event run, reward UI, keyboard/controller selection, victory and reset | DONE |
 
-M2 authorized by user after accepting the prototype. Physical controller testing remains pending.
-
-| M2.1 | Authored modules, seeded assembly and stress validation | DONE |
-
-| M2.2 | Streamed drivable geometry, seed UI, recovery, debug view and complete route playtest | DONE |
-
-| M3.1 | Six physical cars, seeded AI, countdown, checkpoints, ordered results and restart | DONE |
+M4 is intentionally a short coastal slice. M5 has not started. No procedural approval is pending: the user accepted the first prototype and authorized continued development.

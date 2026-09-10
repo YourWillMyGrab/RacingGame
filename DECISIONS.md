@@ -17,3 +17,10 @@
 
 - M3 validation note: A single-race result screen reports actual recorded finishes and labels remaining racers IN PISTA, then FUORI TEMPO after 30 seconds. It never invents a finishing time. Finished cars keep road collision but no longer block other racers.
 - M3 recovery is a physical three-second hold already included in race elapsed time; the solo/lab timer still uses its original added-time penalty. Do not count both penalties in a race.
+
+- M4 is a short three-event coastal run with two upgrade selections. It must not be described as completion of the three-biome MVP.
+- Route seeds derive from the full root seed plus event index using an independent stream; long user seeds must not truncate away the event suffix and repeat roads.
+- Reward rarity depends on placement; choices are unique and exclude already owned upgrades. Lower placements offer Common/Uncommon rewards, apply an 8-integrity penalty with a floor of 1; top-three finishers repair up to 8.
+- Vehicle hooks are per-instance and unsubscribe before the next event/new run. Derived settings always start from DEFAULT_TUNING; no permanent stat progression or mutation of global defaults.
+- The run preserves integrity/Flow between events and clears all build/history/resources on a new run. Countdown locks resource values until driving starts.
+- User's latest instruction limits this pass to finishing the current step; after M4 validation and Git checkpoint, do not begin M5 in the same pass.

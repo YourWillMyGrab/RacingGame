@@ -14,7 +14,7 @@ test('six physical racers stay on grid during countdown, race to finish and keep
  try {
   assert.equal(world.bodies.len(),6);const start=race.racers.map(r=>({...r.vehicle.body.translation()}));
   for(let i=0;i<170;i++)race.step({...IDLE,throttle:1},STEP);
-  assert.equal(race.started,false);for(const r of race.racers){assert.equal(r.vehicle.body.translation().x,start[r.id].x);assert.equal(r.vehicle.body.translation().z,start[r.id].z);}
+  assert.equal(race.started,false);assert.equal(player.flow,25);assert.equal(player.integrity,100);for(const r of race.racers){assert.equal(r.vehicle.body.translation().x,start[r.id].x);assert.equal(r.vehicle.body.translation().z,start[r.id].z);}
   let finishedIntegrity:number|undefined;for(let i=0;i<8000 && race.order.length<6;i++){
    if(i%10===0)stream.update(player.progress,race.racers.map(r=>r.vehicle.progress));
    const p=player.body.translation(),target=route.pointAt(player.progress+12+player.speed*.22);let e=Math.atan2(-(target.x-p.x),-(target.z-p.z))-player.yaw;e=Math.atan2(Math.sin(e),Math.cos(e));
@@ -24,4 +24,9 @@ test('six physical racers stay on grid during countdown, race to finish and keep
   assert.equal(new Set(race.order.map(r=>r.id)).size,6);for(let i=1;i<6;i++)assert.ok(race.order[i].time>=race.order[i-1].time);
   const integrity=player.integrity;const order=JSON.stringify(race.order);for(let i=0;i<30;i++)race.step(IDLE,STEP);assert.equal(JSON.stringify(race.order),order);assert.equal(player.integrity,integrity);assert.ok(race.position>=1&&race.position<=6);
  }finally{stream.dispose();world.free();}
+});
+
+test('recovery returns before a missed checkpoint instead of stranding a racer past the finish',()=>{
+ const world=new RAPIER.World({x:0,y:-9.81,z:0});const route=new ModularRoute('GATES',5),stream=new RoadStream(route,new THREE.Scene(),world);stream.update(25);const player=new Vehicle(world,route),race=new Race(route,world,player);
+ try{world.step();player.progress=200;player.lastAnchor=200;race.player.checkpoint=145;race.recover();assert.ok(player.progress<145);assert.equal(race.player.hold,3);}finally{stream.dispose();world.free();}
 });

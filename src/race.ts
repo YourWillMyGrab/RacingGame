@@ -44,7 +44,7 @@ export class Race {
       return b.vehicle.progress-a.vehicle.progress||a.id-b.id;
     });
   }
-  recover(id=0) {const r=this.racers[id],before=r.vehicle.recoveries;r.vehicle.recover();if(r.vehicle.recoveries>before){r.hold=3;r.previous=r.vehicle.progress;r.stuck=0;}}
+  recover(id=0) {const r=this.racers[id],before=r.vehicle.recoveries;if(r.vehicle.progress>=r.checkpoint)r.vehicle.lastAnchor=Math.min(r.vehicle.lastAnchor,r.checkpoint-6);r.vehicle.recover();if(r.vehicle.recoveries>before){r.hold=3;r.previous=r.vehicle.progress;r.stuck=0;}}
   private controls(r:Racer,dt:number):Controls {
     const car=r.vehicle,p=car.body.translation();
     let lane=r.preferredLane;
@@ -65,7 +65,7 @@ export class Race {
     if(!this.started) {
       this.countdown=Math.max(0,this.countdown-dt);
       // Keep grid coordinates locked while allowing suspension to settle.
-      for(const r of this.racers){r.vehicle.step(IDLE,dt);r.vehicle.body.setLinvel({x:0,y:r.vehicle.body.linvel().y,z:0},true);}
+      for(const r of this.racers){const flow=r.vehicle.flow,integrity=r.vehicle.integrity;r.vehicle.step(IDLE,dt);r.vehicle.flow=flow;r.vehicle.integrity=integrity;r.vehicle.body.setLinvel({x:0,y:r.vehicle.body.linvel().y,z:0},true);}
       this.world.step();if(this.countdown===0)this.started=true;return;
     }
     this.elapsed+=dt;

@@ -24,3 +24,11 @@
 - Fixed result-screen stop incorrectly counting as collision damage; finished racers no longer receive impact evaluation. Added post-finish integrity regression.
 
 - M4 foundation: added typed removable gameplay hooks, 14 data-defined upgrades, seeded placement-weighted rewards, three-event temporary run state and build/reset regression tests. UI connection is next.
+
+## M4 completed — 2026-09-10
+
+- Connected the 14-upgrade pool and temporary build hooks to a three-event coastal run with one-of-three reward screens, placement-based rarity/repair/penalty and resource carryover.
+- Added keyboard and controller reward navigation, final victory, and clean new-run reset. Preserved standalone race, solo road and fixed lab modes.
+- Derived separate event road seeds from the full root seed; long seed input no longer risks erasing event identity.
+- Fixed countdown resource decay, airborne road progress and recovery past missed checkpoints. Added explicit missed-checkpoint HUD guidance.
+- Final verification: 22 automated tests, production build and full Chrome three-event/reward/victory/reset test pass. Tested 1st/5th/1st placements, both reward input methods and recovery. Final run 178.18s, integrity 82.69; new run has zero upgrades, integrity 100 and Flow 25.

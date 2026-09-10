@@ -44,3 +44,8 @@ test('recovery searches backward when another body occupies the anchor',()=>{
     assert.ok(Math.abs(car.body.translation().z-p.z)>4);
   }finally{stream.dispose();world.free();}
 });
+
+test('airborne progress crosses road gates continuously while recovery anchor remains on ground',()=>{
+ const route=new ModularRoute('AIR-GATE',5),world=new RAPIER.World({x:0,y:-9.81,z:0}),scene=new THREE.Scene(),stream=new RoadStream(route,scene,world);stream.update(25);const car=new Vehicle(world,route);
+ try{const p=route.pointAt(64);car.body.setTranslation({x:p.x,y:5,z:p.z},true);car.progress=64;car.lastAnchor=25;car.body.setLinvel({x:0,y:0,z:-25},true);let previous=car.progress;for(let i=0;i<12;i++){car.step({throttle:0,brake:0,steer:0,handbrake:false,boost:false},STEP);world.step();assert.ok(car.progress-previous<=2.01);previous=car.progress;}assert.ok(car.progress>65);assert.equal(car.lastAnchor,25);}finally{stream.dispose();world.free();}
+});
