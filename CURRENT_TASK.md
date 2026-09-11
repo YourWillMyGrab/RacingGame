@@ -1,11 +1,10 @@
 # Current Task
 
-- Task id: review-driving-menu-italian
-- Goal: Address user feedback: technical circuits that reward braking, accessible skill-based Flow, a real main menu, and consistent Italian localization.
-- Files expected to change: src/config.ts, src/vehicle.ts, src/road/, src/race.ts, src/game.ts, src/input.ts, src/lab.ts, src/upgrades.ts, src/style.css, tests/, docs.
-- Acceptance criteria: Every generated race has readable technical braking sectors; a braking driver outperforms full-throttle driving there; useful Flow without upgrades; no idle/handbrake farming; menu and modes work with keyboard/controller; Italian player-facing labels; regression/build/browser checks pass.
-- Baseline commit: aea3264 (stable gameplay e90fe92).
-- Status: DONE
-- Review findings: Road curvature is too mild, lateral tire force is unbounded, high-speed Flow threshold 38 m/s is above normal engine equilibrium, drift eligibility is narrow, title screen lacks a main-menu hierarchy and player text mixes English/internal terms.
-- Outcome: All four user feedback items implemented. 24 automated tests, build, 1,000-seed stress and Chrome menu/controls/lap/solo/race/full-run checks passed. Local stable commit is recorded in PROJECT_STATE.md.
-- Resume: This review is complete. Preserve the new braking/Flow/menu regressions when beginning the next authorized roadmap step.
+- Task id: M5.1-physical-route-choice
+- Goal: Add a physical split/merge in the first two campaign races. Driving left/right selects a technical/speed profile for the next event; signage explains the consequence in advance.
+- Baseline commit: 88c4c17 (validated gameplay 7a8c4c0).
+- Status: IN_PROGRESS
+- Acceptance criteria: both arms physically drivable and rejoin; deterministic geometry and profile choices; player and AI have independent route cursors; recovery stays on selected arm; choice applied once and preserved in run history; visible Italian signs/HUD; streaming disposes both arms; existing modes/tests/build remain valid and browser proves both choices and next-event profile.
+- Scope: M5.1 only. Two distinct event types and continuous event-to-event world lifecycle are the subsequent M5.2/M5.3 tasks, not claimed here.
+- Files expected to change: src/road/, src/vehicle.ts, src/race.ts, src/run.ts, src/game.ts, tests/, state documents.
+- Resume: Complete and validate physical route selection before starting the next micro-milestone.

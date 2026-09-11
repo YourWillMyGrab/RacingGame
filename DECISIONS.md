@@ -29,3 +29,5 @@
 - Technical modules recur every three modules with an alignment/release section, narrow to 12 m and recommend 50 km/h. Tire lateral acceleration is bounded; AI uses an advance braking envelope. These remain chicanes/esses within the forward corridor, not hairpins or forks.
 - Base Flow rewards controlled drift, clean corners, reachable speed and clean drift exits; stationary/held-handbrake input earns none. A drift-exit bonus can outweigh concurrent nitro consumption. Flow stays the resource name; displayed action/rarity labels use Italian.
 - The main menu owns mode discovery, help and persisted view/resolution preferences. Audio controls are deferred until audio exists. No permanent run progression is introduced.
+
+- 2026-09-11: User authorized the next roadmap tasks. The previous M4-only stopping instruction is fulfilled and superseded. Start M5.1 with physical split/merge and next-event route profiles; M5 remains IN_PROGRESS until distinct event types and seamless continuation are implemented.
