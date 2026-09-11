@@ -1,5 +1,7 @@
 # Roadmap
 
+Last reviewed: 2026-09-11. M5.1 is validated; implementation resumes with M5.2.
+
 Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 
 | Milestone | Description | Status |

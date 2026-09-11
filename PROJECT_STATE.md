@@ -1,15 +1,15 @@
 # Project State
 
 - Current stable milestone: M5 in progress; M5.1 physical route choice DONE. M4 and the driving/menu/Italian review remain complete.
-- Current stable micro-milestone: M5.1 physical split/merge and next-event profile choice.
-- Last known working commit: 40d0a78 (`feat: add physical forks and seeded next-race route choices`). The following documentation-only checkpoint records this validated hash.
+- Current stable micro-milestone: documentation and skill review complete; the next implementation target is M5.2.
+- Last known working commit: 54a36cd (`docs: record GitHub Pages hosting`), including the validated M5.1 implementation, Pages workflow and project-state checkpoint.
 - Implemented: first two campaign races have a 300 m split/merge with two physical 12 m arms. Left selects the next technical road profile, right selects longer straights. Italian signs/HUD/reward text explain the choice. Per-car cursors preserve independent player/AI branches and recovery. Both arms and signs stream/dispose together. New-run reset clears profile/history.
 - Validation: 30 automated tests pass, including 1,000 deterministic fork/profile layouts, two full physical drives at 100 integrity with one deliberate branch recovery each, carriageway rays/central collision gap, independent AI choices and six recorded finishes, next-event profile and reset. Production build passes; 1,000-seed / 32,000-module stress validates both arms of 1,000 forks. Menu/browser regression passed with keyboard/controller, preferences, modes and lab return.
 - Full browser run passed: event 1 chose left, completed in 89.53 s, 6th, 82.69 integrity, then generated technical event 2; event 2 chose right, completed in 91.87 s, 1st, 65.08 integrity, then generated speed event 3. Both branch recoveries preserved choice. Event 3 used the speed profile and completed in 109.47 s, 4th, 73.08 integrity. Total 290.87 s; victory and reset to no upgrades/no route history/balanced profile/100 integrity/25 Flow passed. Approach/branch/reward screenshots inspected.
-- Resume: M5.1 is complete and validated. Begin M5.2 from the stable commit below; preserve branch and full-run regressions.
+- Resume: M5.1 is complete and validated. Begin M5.2 from `54a36cd`; preserve branch and full-run regressions.
 - Next task after this checkpoint: M5.2 Time Attack alongside Road Race with seeded targets/rewards. M5.3 is continuous event/world lifecycle. M5.1 does not claim either one.
 - Incomplete: distinct event types, seamless continuation, arbitrary branching graphs/shortcuts, additional biomes, boss/hazards/audio, full 20–30 minute run and final art/performance polish.
 - Runtime: / main menu/campaign; /?race=1 standalone race; /?solo=1 solo practice; /?lab=1 fixed lab. Standalone geometry remains road-v2; campaign forks/profiles use road-v3 and change campaign seed layouts. Repeatability includes profile choices and version.
 - Hosting: GitHub Pages deployment is configured in `.github/workflows/deploy-pages.yml`; Vite uses `/RacingGame/` automatically in GitHub Actions and `/` locally. The repository Pages source must be set to GitHub Actions once in GitHub Settings.
 - Commands: npm run dev; npm test; npm run build; npm run test:stress -- 1000; with dev server and Chrome: npm run test:menu, test:run, test:browser, test:lap, test:modular, test:race.
-- Known blockers: none locally. Physical-controller testing, large WASM/shared bundle and no remote backup remain documented limitations.
+- Known blockers: none locally. Physical-controller testing and the large WASM/shared bundle remain documented limitations. `origin/master` is configured and points at the current stable commit; a physical controller and production-performance certification are still not covered.

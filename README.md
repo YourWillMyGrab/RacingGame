@@ -17,6 +17,15 @@ npm run test:stress -- 1000
 
 Apri l'indirizzo mostrato da Vite, normalmente http://127.0.0.1:5173.
 
+## Documentazione di progetto
+
+- `PROJECT_STATE.md`: checkpoint verificato, limiti e prossimo task.
+- `ROADMAP.md`: milestone e micro-milestone con stato TODO / IN_PROGRESS / DONE / BLOCKED.
+- `CURRENT_TASK.md`: checkpoint dell’ultima attività, chiuso su `54a36cd`.
+- `KNOWN_ISSUES.md`: limiti riproducibili e copertura non certificata.
+- `DEVELOPMENT.md`: workflow locale, browser playtest e skill consigliate.
+- `ASTRA_RACING_ROGUELIKE_MASTER.md`: specifica di prodotto e protocollo di recupero.
+
 ## Pubblicazione su GitHub Pages
 
 Il workflow in `.github/workflows/deploy-pages.yml` esegue test e build a ogni push su `master`, poi pubblica automaticamente `dist` su GitHub Pages. Nel repository GitHub imposta **Settings → Pages → Source: GitHub Actions** una sola volta; dopo il primo deploy l’URL sarà `https://yourwillmygrab.github.io/RacingGame/`.
@@ -45,7 +54,7 @@ I test browser salvano screenshot in `test-results/` (ignorata da Git). Usano ta
 | `/?solo=1` | Percorso modulare in solitaria |
 | `/?lab=1` | Circuito ovale originale e tuning live |
 
-Dal menu puoi anche aprire comandi e impostazioni di visuale/risoluzione, conservate nel browser. Inserisci il codice percorso nella schermata di avvio o aggiungi `seed=7F2C-A91D` ai parametri URL. La stessa versione e seed riproducono strade, rivali e ricompense (a parità di piazzamento e scelte). La run derapata un seed separato per ogni evento. Il circuito di laboratorio è fisso.
+Dal menu puoi anche aprire comandi e impostazioni di visuale/risoluzione, conservate nel browser. Inserisci il codice percorso nella schermata di avvio o aggiungi `seed=7F2C-A91D` ai parametri URL. La stessa versione e seed riproducono strade, rivali e ricompense (a parità di piazzamento e scelte). La run usa un seed separato per ogni evento. Il circuito di laboratorio è fisso.
 
 ## Controlli
 

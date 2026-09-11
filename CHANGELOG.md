@@ -53,3 +53,10 @@
 - Added six regressions covering 1,000 deterministic fork/profile layouts, both full physical drives with recovery, central collision gap, six independent racing cars and event-profile/reset behavior. 30 automated tests and production build pass; 1,000-seed / 32,000-module stress now includes both arms. Final Chrome run passed: left then right physical choices, both branch recoveries, technical then speed event profiles, keyboard/controller rewards, victory and clean reset. Times 89.53 / 91.87 / 109.47 s, final integrity 73.08.
 - Corrected fork minimum-width/curvature metadata and compensated carriageway width through the bend; edge ray coverage and both full physical drives pass after this refinement.
 - Added the GitHub Pages workflow and project-site-aware Vite base path. Every push to `master` runs tests, builds `dist`, and deploys the playable site.
+
+## Documentation and skills review — 2026-09-11
+
+- Reconciled project state, roadmap, current task, known issues and review notes with the validated `54a36cd` checkpoint.
+- Added `DEVELOPMENT.md` with the reproducible local workflow, browser-test prerequisites and next implementation gate.
+- Installed the official `playwright` skill for browser regression work and the optional `hermes-agent` skill for Hermes orchestration; neither changes the game runtime.
+- Revalidated 30 automated tests, the production build and the 1,000-seed / 32,000-module stress run.

@@ -35,3 +35,6 @@
 - M5.1: one 300 m split/merge in the first two campaign races. Two equal-length 12 m arms share forward checkpoint stationing and select the NEXT event road profile (technical or speed), not an immediate change to the current race. The final event has no redundant choice.
 - Topology belongs to a per-vehicle RouteCursor. A choice commits from physical position after the fork mouth, stays locked through recovery and cannot be changed by another car. Both arms are streamed together; the central island is a real gap with inner barriers, not an invisible driveable shortcut.
 - Preserve road-v2 in standalone modes. Campaign fork/profile generation uses road-v3; profile also participates in the next-event seed. No distinct event-type or seamless-transition claim is made for M5.1.
+
+- 2026-09-11: The documentation checkpoint is `54a36cd`; M5.2 Time Attack is the next implementation target. Existing browser regressions and the M5.1 full-run path remain release gates for the next slice.
+- 2026-09-11: Install the official `playwright` Codex skill for browser-test maintenance. Install `hermes-agent` from `NousResearch/hermes-agent` as an optional orchestration aid; it is not a gameplay dependency and must not be treated as evidence that Hermes is configured or running.
