@@ -22,7 +22,7 @@ async function boot() {
     <section class="telemetry"><div class="speed"><strong id="speed">000</strong><span>KM/H</span></div><div class="resources"><label>FLOW <b id="flow-value">25</b></label><meter id="flow" max="100" value="25"></meter><label>INTEGRITÀ <b id="health-value">100</b></label><meter id="health" max="100" value="100"></meter></div></section>
     <div class="controls">WASD <span>guida</span> &nbsp; SPAZIO <span>derapata</span> &nbsp; SHIFT <span>nitro</span> &nbsp; R <span>recupero +3s</span> &nbsp; ESC <span>pausa</span></div>
     <details id="dev"><summary>TELEMETRIA / REGOLAZIONI</summary><pre id="debug"></pre><div id="tuning"></div><button id="defaults">Ripristina regolazioni</button><label class="setting"><input type="checkbox" id="shake" checked> Visuale stabile</label></details>
-    <div id="overlay"><article><p class="eyebrow">VELOCITY ROGUE · BANCO PROVA</p><h1>La traiettoria<br>la scegli tu.</h1><p>Una macchina. Una pista. Trova il limite.<br>Genera Flow con curve pulite, velocità e derapate. Per derapare, dai un colpo di freno a mano, poi rilascialo e controlla il gas.</p><button id="start">ENTRA IN PISTA <span>↗</span></button><p class="hint">Controller: RT accelera · LT frena · stick sterza<br>A derapata · B/RB nitro · Y recupera · Start pausa</p><a class="secondary" href="/">← Menu principale</a></article></div>`;
+    <div id="overlay"><article><p class="eyebrow">VELOCITY ROGUE · BANCO PROVA</p><h1>La traiettoria<br>la scegli tu.</h1><p>Una macchina. Una pista. Trova il limite.<br>Genera Flow con curve pulite, velocità e derapate. Per derapare, dai un colpo di freno a mano, poi rilascialo e controlla il gas.</p><button id="start">ENTRA IN PISTA <span>↗</span></button><p class="hint">Controller: RT accelera · LT frena · stick sterza<br>A derapata · B/RB nitro · Y recupera · Start pausa</p><a class="secondary" href="${import.meta.env.BASE_URL}">← Menu principale</a></article></div>`;
   document.querySelector('#app')!.append(renderer.domElement);
   const $ = <T extends HTMLElement>(id:string) => document.getElementById(id) as T;
   let preferences={stableCamera:true,highQuality:true};
@@ -37,7 +37,7 @@ async function boot() {
   let state:'title'|'driving'|'paused'|'wrecked'='title', last=performance.now(), accumulator=0, elapsed=0, lap=1, lapDistance=0, previousS=25, fps=60, started=false;
   const cameraTarget=new THREE.Vector3(), lookTarget=new THREE.Vector3();
   function showOverlay(title:string,description:string,button:string) {
-    $('overlay').innerHTML=`<article><p class="eyebrow">BANCO PROVA / NEON COAST</p><h1>${title}</h1><p>${description}</p><button id="resume">${button} <span>↗</span></button><button id="restart" class="secondary">Ricomincia la sessione</button><a class="secondary" href="/">← Menu principale</a></article>`;
+    $('overlay').innerHTML=`<article><p class="eyebrow">BANCO PROVA / NEON COAST</p><h1>${title}</h1><p>${description}</p><button id="resume">${button} <span>↗</span></button><button id="restart" class="secondary">Ricomincia la sessione</button><a class="secondary" href="${import.meta.env.BASE_URL}">← Menu principale</a></article>`;
     $('overlay').hidden=false;
     $('resume').onclick=()=>{ if(state==='wrecked') restart(); else {state='driving';$('overlay').hidden=true;} };
     $('restart').onclick=restart;

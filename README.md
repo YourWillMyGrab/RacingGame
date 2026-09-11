@@ -17,6 +17,12 @@ npm run test:stress -- 1000
 
 Apri l'indirizzo mostrato da Vite, normalmente http://127.0.0.1:5173.
 
+## Pubblicazione su GitHub Pages
+
+Il workflow in `.github/workflows/deploy-pages.yml` esegue test e build a ogni push su `master`, poi pubblica automaticamente `dist` su GitHub Pages. Nel repository GitHub imposta **Settings → Pages → Source: GitHub Actions** una sola volta; dopo il primo deploy l’URL sarà `https://yourwillmygrab.github.io/RacingGame/`.
+
+Il percorso degli asset viene impostato automaticamente sul nome del repository in CI, mentre lo sviluppo locale continua a usare la radice `/`. I link del menu rispettano lo stesso percorso, quindi il gioco è navigabile anche come project site Pages.
+
 Con Chrome installato e server di sviluppo attivo sulla porta 5173:
 
 ```sh
