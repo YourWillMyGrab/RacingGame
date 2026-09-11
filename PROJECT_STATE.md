@@ -10,5 +10,6 @@
 - Next task after this checkpoint: M5.2 Time Attack alongside Road Race with seeded targets/rewards. M5.3 is continuous event/world lifecycle. M5.1 does not claim either one.
 - Incomplete: distinct event types, seamless continuation, arbitrary branching graphs/shortcuts, additional biomes, boss/hazards/audio, full 20–30 minute run and final art/performance polish.
 - Runtime: / main menu/campaign; /?race=1 standalone race; /?solo=1 solo practice; /?lab=1 fixed lab. Standalone geometry remains road-v2; campaign forks/profiles use road-v3 and change campaign seed layouts. Repeatability includes profile choices and version.
+- Hosting: GitHub Pages deployment is configured in `.github/workflows/deploy-pages.yml`; Vite uses `/RacingGame/` automatically in GitHub Actions and `/` locally. The repository Pages source must be set to GitHub Actions once in GitHub Settings.
 - Commands: npm run dev; npm test; npm run build; npm run test:stress -- 1000; with dev server and Chrome: npm run test:menu, test:run, test:browser, test:lap, test:modular, test:race.
 - Known blockers: none locally. Physical-controller testing, large WASM/shared bundle and no remote backup remain documented limitations.
