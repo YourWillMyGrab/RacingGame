@@ -13,6 +13,8 @@ export class RoadStream {
   private white=new THREE.MeshStandardMaterial({color:0xb8d2d5});
   private structure=new THREE.MeshStandardMaterial({color:0x244550,roughness:.75});
   private debugMat=new THREE.MeshBasicMaterial({color:0xffd27a,wireframe:true});
+  private signTexture?:THREE.CanvasTexture;
+  private signMaterial?:THREE.MeshBasicMaterial;
   constructor(readonly route: ModularRoute,private scene:THREE.Scene,private world:RAPIER.World) {}
   update(progress:number, others:number[]=[]) {
     const centers=[progress,...others];
@@ -60,6 +62,11 @@ export class RoadStream {
     }
     if(chunk.definition.flags.bridge)for(let s=chunk.start+8;s<chunk.end;s+=18)for(const side of [-1,1])addBox(.4,5,.4,s,side*10.8,2.5,this.white);
     for(const s of chunk.definition.scenerySockets)for(const side of [-1,1])addBox(14,15+(chunk.index%5)*7,18,chunk.start+s,side*50,6+(chunk.index%5)*3.5);
+    if(chunk.definition.difficulty===3&&typeof document!=='undefined') {
+      if(!this.signMaterial){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#ffb65c';ctx.fillRect(0,0,256,256);ctx.fillStyle='#172c35';ctx.textAlign='center';ctx.font='bold 38px sans-serif';ctx.fillText('FRENA',128,53);ctx.font='bold 105px sans-serif';ctx.fillText('50',128,159);ctx.font='24px sans-serif';ctx.fillText('CURVE STRETTE',128,215);this.signTexture=new THREE.CanvasTexture(canvas);this.signTexture.colorSpace=THREE.SRGBColorSpace;this.signMaterial=new THREE.MeshBasicMaterial({map:this.signTexture,side:THREE.DoubleSide});}
+      const signGeo=new THREE.PlaneGeometry(2.4,2.4);geometry.push(signGeo);
+      for(const distance of [70,35])for(const side of [-1,1]){const p=this.route.pointAt(chunk.start-distance),sign=new THREE.Mesh(signGeo,this.signMaterial);sign.position.set(p.x+Math.cos(p.yaw)*side*11.8,p.y+2.7,p.z-Math.sin(p.yaw)*side*11.8);sign.rotation.y=p.yaw;group.add(sign);addBox(.18,1.5,.18,chunk.start-distance,side*11.8,.75,this.white);}
+    }
     for(const s of [chunk.start,...chunk.definition.recoveryAnchors.map(s=>s+chunk.start)]) {
       const p=this.route.pointAt(s),anchor=new THREE.Mesh(box,this.debugMat);anchor.position.set(p.x,p.y+.5,p.z);anchor.scale.set(2,1,2);debug.add(anchor);
     }
@@ -79,5 +86,5 @@ export class RoadStream {
     for(const geometry of r.geometry)geometry.dispose();
     this.active.delete(index);this.unloaded++;
   }
-  dispose() {for(const i of [...this.active.keys()])this.remove(i);for(const mat of [this.road,this.wall,this.white,this.structure,this.debugMat])mat.dispose();}
+  dispose() {for(const i of [...this.active.keys()])this.remove(i);for(const mat of [this.road,this.wall,this.white,this.structure,this.debugMat])mat.dispose();this.signMaterial?.dispose();this.signTexture?.dispose();}
 }

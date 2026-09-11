@@ -24,3 +24,8 @@
 - Vehicle hooks are per-instance and unsubscribe before the next event/new run. Derived settings always start from DEFAULT_TUNING; no permanent stat progression or mutation of global defaults.
 - The run preserves integrity/Flow between events and clears all build/history/resources on a new run. Countdown locks resource values until driving starts.
 - User's latest instruction limits this pass to finishing the current step; after M4 validation and Git checkpoint, do not begin M5 in the same pass.
+
+- User feedback pass after M4: prioritize braking difficulty, useful base-car Flow, a real main menu and Italian text before M5. The road-v2 stream intentionally changes old seed geometry; reproducibility is within a generator version.
+- Technical modules recur every three modules with an alignment/release section, narrow to 12 m and recommend 50 km/h. Tire lateral acceleration is bounded; AI uses an advance braking envelope. These remain chicanes/esses within the forward corridor, not hairpins or forks.
+- Base Flow rewards controlled drift, clean corners, reachable speed and clean drift exits; stationary/held-handbrake input earns none. A drift-exit bonus can outweigh concurrent nitro consumption. Flow stays the resource name; displayed action/rarity labels use Italian.
+- The main menu owns mode discovery, help and persisted view/resolution preferences. Audio controls are deferred until audio exists. No permanent run progression is introduced.

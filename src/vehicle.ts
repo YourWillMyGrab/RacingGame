@@ -15,6 +15,8 @@ export class Vehicle {
   body: RAPIER.RigidBody;
   collider: RAPIER.Collider;
   flow = 25;
+  flowSource:'none'|'drift'|'corner'|'speed'|'exit'='none';
+  flowEarned=0;
   integrity = 100;
   speed = 0;
   slip = 0;
@@ -72,8 +74,17 @@ export class Vehicle {
     if(this.drifting)this.events.emit('drift',{car:this,dt,amount:0,input});
     else if(previousDrift>.35 && this.grounded && Math.abs(this.slip)<t.minSlip)this.events.emit('driftExit',{car:this,dt,amount:previousDrift,input});
     if(this.boosting)this.events.emit('boost',{car:this,dt,amount:0,input});
-    if(this.drifting) { this.driftTime+=dt; this.flow+=t.driftFlow*dt*(Math.abs(this.slip)/t.maxSlip+.5); }
-    else { this.driftTime=0; if(this.speed>38 && this.grounded && !this.boosting) this.flow+=1.8*dt; else this.flow-=.3*dt; }
+    this.flowSource='none';let earned=0;
+    const clean=canDrive&&this.grounded&&!input.handbrake&&this.cooldown===0;
+    if(this.drifting&&clean){this.driftTime+=dt;earned=t.driftFlow*dt*(Math.abs(this.slip)/t.maxSlip+.6);this.flowSource='drift';}
+    else {
+      this.driftTime=0;
+      if(clean&&previousDrift>.35&&Math.abs(this.slip)<t.minSlip){earned=t.cleanExitFlow;this.flowSource='exit';}
+      else if(clean&&!this.boosting&&forward>9&&Math.abs(this.steer)>.12&&Math.abs(this.slip)<.45){earned=t.cornerFlow*dt;this.flowSource='corner';}
+      else if(clean&&!this.boosting&&forward>t.speedFlowThreshold){earned=t.speedFlow*dt;this.flowSource='speed';}
+      else if(this.speed<5)this.flow-=.15*dt;
+    }
+    this.flow+=earned;this.flowEarned+=earned;
     if(this.boosting) this.flow-=t.flowDrain*dt;
     this.flow=clamp(this.flow,0,100);
     if(this.grounded && canDrive) {
@@ -88,7 +99,7 @@ export class Vehicle {
       if(this.boosting) force+=t.boostForce*clamp(1-forward/t.boostMaxSpeed,0,1);
       if(input.handbrake) force-=forward*t.mass*.65;
       const grip=input.handbrake?t.driftGrip:t.grip;
-      const side=-lateral*t.mass*grip;
+      const side=clamp(-lateral*grip,-t.maxLateralAccel,t.maxLateralAccel)*t.mass;
       this.body.addForce({x:fx*force+rx*side,y:0,z:fz*force+rz*side},true);
       const speedSteer=t.steer+(t.highSpeedSteer-t.steer)*clamp(Math.abs(forward)/50,0,1);
       const desired=this.steer*speedSteer*clamp(forward/12,-.6,1)*(input.handbrake?t.driftRotation:1);
@@ -100,7 +111,7 @@ export class Vehicle {
     // Progress follows the road corridor in the air too; only safe recovery
     // anchors require wheel contact. Otherwise a crest could skip a race gate.
     const anchor=this.route.nearest(p.x,p.z,this.progress);
-    if(anchor.distance<anchor.width/2-2)this.progress=anchor.s;
+    if(anchor.distance<anchor.width/2+.5)this.progress=anchor.s;
     if(this.grounded) {
       if(this.airTime>.3)this.events.emit('landing',{car:this,dt,amount:this.airTime,input});
       if(this.airTime>.3 && v.y < -6) this.damage((-v.y-6)*t.damageScale);
@@ -144,5 +155,6 @@ export class Vehicle {
     this.integrity=100;this.lastAnchor=this.route.start;this.recover();this.flow=25;this.penalty=0;this.recoveries=0;
     this.reverseArmed=false;this.stopTime=0;
     this.surge=0;this.power=1;
+    this.flowEarned=0;this.flowSource='none';
   }
 }

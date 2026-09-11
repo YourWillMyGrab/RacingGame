@@ -47,19 +47,21 @@ export class Race {
   recover(id=0) {const r=this.racers[id],before=r.vehicle.recoveries;if(r.vehicle.progress>=r.checkpoint)r.vehicle.lastAnchor=Math.min(r.vehicle.lastAnchor,r.checkpoint-6);r.vehicle.recover();if(r.vehicle.recoveries>before){r.hold=3;r.previous=r.vehicle.progress;r.stuck=0;}}
   private controls(r:Racer,dt:number):Controls {
     const car=r.vehicle,p=car.body.translation();
+    if(car.progress>r.checkpoint+8){this.recover(r.id);return IDLE;}
     let lane=r.preferredLane;
     const ahead=this.racers.find(other=>other!==r && other.finishTime===null && other.vehicle.progress>car.progress && other.vehicle.progress-car.progress<20 && Math.hypot(other.vehicle.body.translation().x-p.x,other.vehicle.body.translation().z-p.z)<22);
     if(ahead)lane=ahead.lane>=0?-4.5:4.5;
+    const technical=this.route.moduleAt(car.progress+25).definition.difficulty===3;
+    if(technical)lane*=.5;
     r.lane+=(lane-r.lane)*Math.min(1,dt*1.5);
-    const target=this.route.pointAt(car.progress+12+car.speed*.22);
+    const target=this.route.pointAt(car.progress+6+car.speed*.32);
     const tx=target.x+Math.cos(target.yaw)*r.lane,tz=target.z-Math.sin(target.yaw)*r.lane;
     const desired=Math.atan2(-(tx-p.x),-(tz-p.z));
     const error=Math.atan2(Math.sin(desired-car.yaw),Math.cos(desired-car.yaw));
-    const module=this.route.moduleAt(car.progress+40).definition;
-    const targetSpeed=module.recommendedSpeed*(.78+r.aggression*.15);
+    const targetSpeed=this.route.speedAt(car.progress)*(.88+r.aggression*.08);
     if(car.speed<1.5 && this.elapsed>5)r.stuck+=dt;else r.stuck=0;
     if(r.stuck>4)this.recover(r.id);
-    return {throttle:car.speed>targetSpeed?0:r.pace,brake:car.speed>targetSpeed+2?.35:0,steer:Math.max(-1,Math.min(1,error*2.4)),handbrake:false,boost:Math.abs(error)<.04 && car.flow>20 && !ahead && r.aggression>.65};
+    return {throttle:car.speed>targetSpeed?0:r.pace,brake:car.speed>targetSpeed+.8?.65:0,steer:Math.max(-1,Math.min(1,error*3)),handbrake:false,boost:this.route.speedAt(car.progress+80)>30&&Math.abs(error)<.04&&car.speed<targetSpeed-2&&car.flow>35&&!ahead&&r.aggression>.65};
   }
   step(playerControls:Controls,dt:number) {
     if(!this.started) {

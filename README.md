@@ -25,6 +25,7 @@ npm run test:lap
 npm run test:modular
 npm run test:race
 npm run test:run
+npm run test:menu
 ```
 
 I test browser salvano screenshot in `test-results/` (ignorata da Git). Usano tastiera reale via Playwright e Gamepad API simulato; il test dell'intera run accelera l'orologio virtuale del browser. Non sostituiscono il collaudo con un controller fisico. La build produzione non espone le proprietà QA `window.__drivingLab` e `window.__roadGame`.
@@ -33,12 +34,12 @@ I test browser salvano screenshot in `test-results/` (ignorata da Git). Usano ta
 
 | URL | Modalità |
 |---|---|
-| `/` | Run di tre gare, potenziamenti e reset completo |
+| `/` | Menu principale: partita di tre gare, modalità, comandi e impostazioni |
 | `/?race=1` | Gara singola a sei auto |
 | `/?solo=1` | Percorso modulare in solitaria |
 | `/?lab=1` | Circuito ovale originale e tuning live |
 
-Inserisci il seed nel menu o aggiungi `seed=7F2C-A91D` ai parametri URL. La stessa versione e seed riproducono strade, rivali e ricompense (a parità di piazzamento e scelte). La run deriva un seed separato per ogni evento. Il circuito di laboratorio è fisso.
+Dal menu puoi anche aprire comandi e impostazioni di visuale/risoluzione, conservate nel browser. Inserisci il codice percorso nella schermata di avvio o aggiungi `seed=7F2C-A91D` ai parametri URL. La stessa versione e seed riproducono strade, rivali e ricompense (a parità di piazzamento e scelte). La run derapata un seed separato per ogni evento. Il circuito di laboratorio è fisso.
 
 ## Controlli
 
@@ -48,13 +49,13 @@ Inserisci il seed nel menu o aggiungi `seed=7F2C-A91D` ai parametri URL. La stes
 | Frenare / retromarcia | S / ↓ | LT |
 | Sterzare | A/D / ←/→ | Stick sinistro |
 | Freno a mano | Spazio | A |
-| Boost | Shift | B / RB |
+| Nitro | Shift | B / RB |
 | Recupero | R | Y |
 | Pausa / riprendi | Esc | Start |
 | Scegli potenziamento | 1/2/3 oppure ←/→ + Invio | D-pad + A |
-| Conferma avvio/risultati | Invio | A / Start |
+| Naviga nel menu | ↑/↓ e Invio | Croce direzionale e A |
 
-La frenata arresta prima l'auto, poi mantenendola premuta da fermo innesta la retromarcia. Inizia la deriva con sterzo e freno a mano, rilascia il freno a mano e controlla il gas per generare Flow. Tenere il freno a mano premuto non genera ricompense. Shift consuma Flow. Gli urti forti riducono l'integrità; a zero la run termina. Cambiare finestra mette in pausa.
+La frenata arresta prima l'auto, poi mantenendola premuta da fermo innesta la retromarcia. Inizia la derapata con sterzo e freno a mano, rilascia il freno a mano e controlla il gas per generare Flow. Tenere il freno a mano premuto non genera ricompense. Curve pulite generano 4 Flow/s, velocità oltre 83 km/h 3 Flow/s e un’uscita pulita dalla derapata 8 Flow. Il nitro consuma 18 Flow/s. Gli urti interrompono temporaneamente la ricarica da guida pulita. Gli urti forti riducono l'integrità; a zero la run termina. Cambiare finestra mette in pausa.
 
 In gara, il recupero cerca un punto libero e ferma l'auto per tre secondi, già compresi nel tempo di gara. Nel laboratorio/solo mantiene la penalità originale di +3 secondi.
 
@@ -62,14 +63,14 @@ In gara, il recupero cerca un punto libero e ferma l'auto per tre secondi, già 
 
 Le prime due gare offrono una scelta fra tre potenziamenti. I primi tre classificati recuperano fino a 8 integrità; i piazzamenti inferiori perdono 8 integrità (resta almeno 1) e ricevono ricompense di rarità ridotta. Integrità e Flow passano alla gara successiva.
 
-La libreria iniziale comprende 14 potenziamenti, sei categorie di rarità e svantaggi espliciti per le maledizioni. Le direzioni di build comprendono deriva/Flow, massa/impatti e potenza a bassa integrità. Statistiche ed effetti vengono rimossi iniziando una nuova run. Non esiste progressione permanente.
+La libreria iniziale comprende 14 potenziamenti, sei categorie di rarità e svantaggi espliciti per le maledizioni. Le direzioni di build comprendono derapata/Flow, massa/impatti e potenza a bassa integrità. Statistiche ed effetti vengono rimossi iniziando una nuova run. Non esiste progressione permanente.
 
-I rivali usano lo stesso modello fisico, con ritmo, linea preferita e aggressività derivati dal seed. Frenano per le curve, cercano una linea di sorpasso e recuperano se bloccati. I checkpoint devono essere attraversati in ordine. Dopo l'arrivo del giocatore, gli altri continuano fino a 30 secondi: la classifica distingue tempi registrati, ritiri, piloti in pista e fuori tempo. Le auto arrivate non bloccano fisicamente gli altri piloti.
+I rivali usano lo stesso modello fisico, con ritmo, linea preferita e aggressività derapatati dal seed. Frenano per le curve, cercano una linea di sorpasso e recuperano se bloccati. I checkpoint devono essere attraversati in ordine. Dopo l'arrivo del giocatore, gli altri continuano fino a 30 secondi: la classifica distingue tempi registrati, ritiri, piloti in pista e fuori tempo. Le auto arrivate non bloccano fisicamente gli altri piloti.
 
 ## Architettura
 
 - `src/config.ts`: parametri in unità SI, fisica a 60 Hz.
-- `src/vehicle.ts`: corpo Rapier, quattro raggi sospensione, grip, deriva, Flow, danni, recupero ed eventi.
+- `src/vehicle.ts`: corpo Rapier, quattro raggi sospensione, grip, derapata, Flow, danni, recupero ed eventi.
 - `src/input.ts`: tastiera e controller standard.
 - `src/road/`: profili modulari, socket, seed, validazione, assemblaggio e streaming.
 - `src/race.ts`: griglia, AI, checkpoint e arrivi.
@@ -77,10 +78,12 @@ I rivali usano lo stesso modello fisico, con ritmo, linea preferita e aggressivi
 - `src/game.ts`: rendering, HUD e flusso della run; `src/lab.ts` conserva il laboratorio iniziale.
 - `tests/`: regressioni fisiche/logiche, stress e prove browser riproducibili.
 
-Il pannello telemetria mostra chunk, collisioni, caricamenti/scaricamenti, ID dei moduli e ancore/socket. Il tuning è disponibile nel Driving Lab.
+Il pannello telemetria mostra chunk, collisioni, caricamenti/scaricamenti, ID dei moduli e ancore/socket. Le regolazioni di guida sono disponibili nel Banco prova.
 
 ## Limiti attuali
 
 Questa è la slice costiera M4, non il gioco completo da 20–30 minuti. Le gare passano attraverso risultati/ricompense e ricreano la strada successiva. Bivi fisici, continuità senza ricostruzione, altri eventi, boss, altri biomi, salti, audio e rifinitura visiva appartengono ai prossimi milestone.
+
+Il generatore `road-v2` introduce almeno tre settori tecnici nelle gare della partita: chicane ed esse che si restringono fino a 12 metri, con avvisi anticipati di frenata a 50 km/h. L’aderenza laterale ha un limite fisico: entrare troppo forte fa perdere la linea. Il cambio di versione modifica i percorsi dei vecchi codici; la ripetibilità resta garantita nella stessa versione.
 
 Le strade avanzano in un corridoio senza autointersezioni: curve, esse, dossi moderati, tunnel e ponti. La geometria e le collisioni vengono caricate davanti e scaricate dietro; i metadati leggeri sono generati in anticipo. Rollio/beccheggio sono assistiti e visivi. Vedi `PROJECT_STATE.md` e `KNOWN_ISSUES.md` per il checkpoint e i limiti precisi.

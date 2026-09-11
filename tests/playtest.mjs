@@ -14,7 +14,11 @@ await page.keyboard.down('KeyW');await page.waitForTimeout(2500);
 const acceleration=await snapshot();assert.ok(acceleration.speed>12);assert.equal(acceleration.contacts,4);
 await page.keyboard.down('Space');await page.keyboard.down('KeyA');await page.waitForTimeout(650);await page.keyboard.up('Space');await page.waitForTimeout(200);
 const drift=await snapshot();assert.ok(drift.flow>acceleration.flow);await page.screenshot({path:'test-results/driving.png'});
-await page.keyboard.up('KeyA');await page.keyboard.down('ShiftLeft');await page.waitForTimeout(350);const boost=await snapshot();assert.ok(boost.boosting);assert.ok(boost.flow<drift.flow);
+// Test nitro consumption on a fresh straight: a clean drift-exit bonus can
+// legitimately outweigh consumption immediately after the previous manoeuvre.
+await page.keyboard.up('KeyA');await page.keyboard.up('KeyW');await page.keyboard.press('Escape');await page.click('#restart');
+await page.keyboard.down('KeyW');await page.waitForTimeout(1800);const beforeBoost=await snapshot();
+await page.keyboard.down('ShiftLeft');await page.waitForTimeout(350);const boost=await snapshot();assert.ok(boost.boosting);assert.ok(boost.flow<beforeBoost.flow);
 await page.keyboard.up('ShiftLeft');await page.keyboard.up('KeyW');await page.keyboard.press('KeyR');await page.waitForTimeout(120);
 const recovery=await snapshot();assert.equal(recovery.recoveries,1);assert.equal(recovery.penalty,3);assert.ok(recovery.speed<1);
 await page.keyboard.press('Escape');await page.waitForTimeout(100);const paused=await snapshot();assert.equal(paused.state,'paused');await page.waitForTimeout(200);assert.equal((await snapshot()).elapsed,paused.elapsed);

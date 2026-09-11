@@ -31,5 +31,6 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 | M3.2 | Preserve post-finish integrity and resources during countdown | DONE |
 | M4.1 | Temporary run state, 14 upgrades, rarity and removable event hooks | DONE |
 | M4.2 | Three-event run, reward UI, keyboard/controller selection, victory and reset | DONE |
+| M4 review | Braking sectors, accessible Flow, main menu and Italian player text | DONE |
 
 M4 is intentionally a short coastal slice. M5 has not started. No procedural approval is pending: the user accepted the first prototype and authorized continued development.

@@ -6,11 +6,11 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.clock.install();
- await page.goto('http://127.0.0.1:5173/?seed=7F2C-A91D');await page.click('#start');
+ await page.goto('http://127.0.0.1:5173/?seed=7F2C-A91D');await page.click('#new-run');await page.click('#start');
  async function pilot(){await page.evaluate(async()=>{
   const {ModularRoute}=await import('/src/road/route.ts');const snapshot=window.__roadGame,route=new ModularRoute(snapshot.seed,snapshot.moduleCount);
   const pad={mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};window.qaPad=pad;Object.defineProperty(navigator,'getGamepads',{value:()=>[window.qaPad],configurable:true});
-  function drive(){const v=window.__roadGame,p=v.position,target=route.pointAt(v.progress+12+v.speed*.22);let e=Math.atan2(-(target.x-p.x),-(target.z-p.z))-v.yaw;e=Math.atan2(Math.sin(e),Math.cos(e));const steer=Math.max(-1,Math.min(1,e*2.4));pad.axes[0]=-Math.sign(steer)*(.12+Math.abs(steer)*.88);pad.buttons[7]={pressed:true,value:.94};if(v.state==='driving')requestAnimationFrame(drive);else pad.buttons[7]={pressed:false,value:0};}requestAnimationFrame(drive);
+  function drive(){const v=window.__roadGame,p=v.position,target=route.pointAt(v.progress+6+v.speed*.32);let e=Math.atan2(-(target.x-p.x),-(target.z-p.z))-v.yaw;e=Math.atan2(Math.sin(e),Math.cos(e));const steer=Math.max(-1,Math.min(1,e*3));pad.axes[0]=-Math.sign(steer)*(.12+Math.abs(steer)*.88);const limit=route.speedAt(v.progress)*.96;pad.buttons[7]={pressed:v.speed<limit,value:v.speed<limit?.94:0};pad.buttons[6]={pressed:v.speed>limit+.7,value:v.speed>limit+.7?.65:0};if(v.state==='driving')requestAnimationFrame(drive);else pad.buttons[7]={pressed:false,value:0};}requestAnimationFrame(drive);
  });}
  for(let event=0;event<3;event++){
   await pilot();

@@ -7,6 +7,7 @@ import {RoadStream} from '../src/road/stream.ts';
 import {Vehicle} from '../src/vehicle.ts';
 import {Race,IDLE,advanceCheckpoint} from '../src/race.ts';
 import {STEP} from '../src/config.ts';
+import {drive} from './driver.ts';
 await RAPIER.init();
 test('checkpoint progress requires contiguous forward gate crossing',()=>{assert.equal(advanceCheckpoint(64,66,65,1000),145);assert.equal(advanceCheckpoint(50,200,65,1000),65);assert.equal(advanceCheckpoint(70,60,65,1000),65);assert.equal(advanceCheckpoint(64,64,65,1000),65);});
 test('six physical racers stay on grid during countdown, race to finish and keep results',()=>{
@@ -16,9 +17,9 @@ test('six physical racers stay on grid during countdown, race to finish and keep
   for(let i=0;i<170;i++)race.step({...IDLE,throttle:1},STEP);
   assert.equal(race.started,false);assert.equal(player.flow,25);assert.equal(player.integrity,100);for(const r of race.racers){assert.equal(r.vehicle.body.translation().x,start[r.id].x);assert.equal(r.vehicle.body.translation().z,start[r.id].z);}
   let finishedIntegrity:number|undefined;for(let i=0;i<8000 && race.order.length<6;i++){
-   if(i%10===0)stream.update(player.progress,race.racers.map(r=>r.vehicle.progress));
+   if(i>300 && i%300===0 && (player.speed<1 || player.progress>race.player.checkpoint+8))race.recover();if(i%10===0)stream.update(player.progress,race.racers.map(r=>r.vehicle.progress));
    const p=player.body.translation(),target=route.pointAt(player.progress+12+player.speed*.22);let e=Math.atan2(-(target.x-p.x),-(target.z-p.z))-player.yaw;e=Math.atan2(Math.sin(e),Math.cos(e));
-   race.step({throttle:.92,brake:0,steer:Math.max(-1,Math.min(1,e*2.4)),handbrake:false,boost:false},STEP); if(race.player.finishTime!==null){finishedIntegrity??=player.integrity;assert.equal(player.integrity,finishedIntegrity);}
+   race.step(drive(route,player),STEP); if(race.player.finishTime!==null){finishedIntegrity??=player.integrity;assert.equal(player.integrity,finishedIntegrity);}
   }
   assert.equal(race.order.length,6,JSON.stringify(race.racers.map(r=>({id:r.id,progress:r.vehicle.progress,health:r.vehicle.integrity,checkpoint:r.checkpoint}))));
   assert.equal(new Set(race.order.map(r=>r.id)).size,6);for(let i=1;i<6;i++)assert.ok(race.order[i].time>=race.order[i-1].time);

@@ -6,6 +6,7 @@ import { ModularRoute } from '../src/road/route.ts';
 import { RoadStream } from '../src/road/stream.ts';
 import { Vehicle } from '../src/vehicle.ts';
 import { STEP } from '../src/config.ts';
+import { drive } from './driver.ts';
 await RAPIER.init();
 
 test('stream unloads physics/render resources, can reload behind and dispose to zero',()=>{
@@ -27,7 +28,7 @@ test('ray suspension drives across seeded module seams, curves and height profil
       if(i%10===0)stream.update(car.progress);
       const p=car.body.translation(),target=route.pointAt(car.progress+12+car.speed*.22);
       let error=Math.atan2(-(target.x-p.x),-(target.z-p.z))-car.yaw;error=Math.atan2(Math.sin(error),Math.cos(error));
-      car.step({throttle:.85,brake:0,steer:Math.max(-1,Math.min(1,error*2.4)),handbrake:false,boost:false},STEP);world.step();car.afterStep();maxHeight=Math.max(maxHeight,p.y);
+      car.step(drive(route,car),STEP);world.step();car.afterStep();maxHeight=Math.max(maxHeight,p.y);
       assert.ok(Number.isFinite(car.speed));
     }
     assert.ok(car.progress>=route.length-40,`stopped at ${car.progress}/${route.length} y=${car.body.translation().y}`);

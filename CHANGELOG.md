@@ -32,3 +32,15 @@
 - Derived separate event road seeds from the full root seed; long seed input no longer risks erasing event identity.
 - Fixed countdown resource decay, airborne road progress and recovery past missed checkpoints. Added explicit missed-checkpoint HUD guidance.
 - Final verification: 22 automated tests, production build and full Chrome three-event/reward/victory/reset test pass. Tested 1st/5th/1st placements, both reward input methods and recovery. Final run 178.18s, integrity 82.69; new run has zero upgrades, integrity 100 and Flow 25.
+
+## M4 feedback review — 2026-09-10
+
+- Added three authored braking profiles, 12 m technical centres, guaranteed sector spacing, advance road/HUD signs and curvature-aware AI braking. Capped lateral tire force so excess entry speed loses the line.
+- Increased base-car acceleration and accessible Flow: clean corners, reachable high speed, wider drift eligibility and clean-exit bonus; reduced nitro drain. The HUD explains the source of Flow.
+- Added a main menu with three-race play, standalone race, solo practice, fixed lab, controls/help and persisted view/resolution preferences. Supports keyboard and standard controller navigation.
+- Revised player-facing Italian: derapata, nitro, codice percorso, checkpoint guidance, upgrade names/descriptions and translated rarities; internal identifiers remain stable.
+- Added braking-versus-full-throttle regression and menu/browser coverage. The new road-v2 stream changes old seed layouts while preserving repeatability within the version.
+- Verification: 24 automated tests, build, 1,000 seeds / 32,000 modules, keyboard/controller controls and a damage-free lab lap pass. Full three-event Chrome run passed in 255.87 s with 69.17 final integrity, keyboard/controller rewards, recovery and clean reset.
+
+- 2026-09-11 resume: completed return-to-menu from lab pause, shared lab view preferences, Enter/A lab start, Italian decimal separators and singular recovery labels. Final menu regression passed.
+- Final long-route checks passed: standalone six-car race 136.52 s / 1st / 100 integrity; solo 136.10 s / 100 integrity, 21 streamed chunks unloaded; both reset successfully. All requested feedback items are complete.

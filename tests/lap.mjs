@@ -15,7 +15,7 @@ await page.evaluate(async()=>{
     error=Math.atan2(Math.sin(error),Math.cos(error));
     const steer=Math.max(-1,Math.min(1,error*2.4));
     pad.axes[0]=-Math.sign(steer)*(.12+Math.abs(steer)*.88);
-    pad.buttons[7]={pressed:true,value:.85};
+    pad.buttons[7]={pressed:v.speed<24,value:v.speed<24?.85:0};pad.buttons[6]={pressed:v.speed>25,value:v.speed>25?.65:0};
     if(v.lap<2 && v.integrity>0)requestAnimationFrame(drive);
     else pad.buttons[7]={pressed:false,value:0};
   }requestAnimationFrame(drive);

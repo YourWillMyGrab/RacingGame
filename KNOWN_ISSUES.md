@@ -9,5 +9,7 @@
 - Suspension uses four Rapier rays, while body pitch/roll are locked and visually assisted. Gentle elevation is tested, but large jumps and complex landings still need authored browser content.
 - Art is simple original prototype geometry. Audio, tire smoke, weather, rich lighting and final visual polish remain outstanding.
 - Vite reports the large Rapier/WASM shared chunk (~3.4 MB JavaScript, ~1.23 MB gzip). Performance and startup optimization remain outstanding; local FPS is not a hardware certification.
-- Browser tests require Chrome and the dev server on 127.0.0.1:5173. The full-run test uses a virtual clock and a simulated driver that uses the actual R recovery action when blocked.
+- Browser tests require Chrome and the dev server on 127.0.0.1:5173. The full-run test uses a virtual clock and a simulated braking driver that uses the actual R recovery action when blocked.
 - No remote Git origin is configured; local development and commits work, but no off-device backup was created.
+
+- Road-v2 deliberately changes old seed layouts. Technical sections are narrow chicanes/esses, not hairpins; difficulty and Flow still need subjective human playtesting. Menu graphics/camera preferences persist locally; there is no audio system yet.
