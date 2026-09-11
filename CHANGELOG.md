@@ -44,3 +44,11 @@
 
 - 2026-09-11 resume: completed return-to-menu from lab pause, shared lab view preferences, Enter/A lab start, Italian decimal separators and singular recovery labels. Final menu regression passed.
 - Final long-route checks passed: standalone six-car race 136.52 s / 1st / 100 integrity; solo 136.10 s / 100 integrity, 21 streamed chunks unloaded; both reset successfully. All requested feedback items are complete.
+
+## M5.1 physical route choice — 2026-09-11
+
+- Added a physical 300 m split/merge to the first two campaign races. Each 12 m branch has road collision and barriers, with a real separated centre; rendering is instanced and streaming owns/disposes both arms and signs.
+- Driving left selects a technical next-event profile; driving right selects longer straight sections. Signs at 100/30 m and Italian HUD/reward text explain the consequence. New-run reset clears route history.
+- Added per-car route cursors, physical branch locking, branch-aware AI targeting and recovery, preserving ordered gates and equal branch stationing.
+- Added six regressions covering 1,000 deterministic fork/profile layouts, both full physical drives with recovery, central collision gap, six independent racing cars and event-profile/reset behavior. 30 automated tests and production build pass; 1,000-seed / 32,000-module stress now includes both arms. Final Chrome run passed: left then right physical choices, both branch recoveries, technical then speed event profiles, keyboard/controller rewards, victory and clean reset. Times 89.53 / 91.87 / 109.47 s, final integrity 73.08.
+- Corrected fork minimum-width/curvature metadata and compensated carriageway width through the bend; edge ray coverage and both full physical drives pass after this refinement.

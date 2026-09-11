@@ -1,5 +1,5 @@
 import RAPIER from '@dimforge/rapier3d-compat';
-import { ModularRoute } from './road/route';
+import { ModularRoute,RouteCursor } from './road/route';
 import { randomStream } from './road/seed';
 import { Vehicle } from './vehicle';
 import type { Controls } from './input';
@@ -28,6 +28,7 @@ export class Race {
     const names=['TU','MICA','SABLE','ECHO','ROOK','VANTA'],colors=[0xff704a,0x49dbc9,0xf4c95f,0x7da9ff,0xf2f1dd,0xb68cff];
     for(let i=0;i<6;i++) {
       const vehicle=i?new Vehicle(world,route,{...DEFAULT_TUNING}):player;
+      if(i&&vehicle.route instanceof RouteCursor)for(const c of route.chunks)if(c.branches)vehicle.route.plans.set(c.index,i%2?'right':'left');
       const lane=i%2===0?-3:3,s=25+Math.floor(i/2)*8,p=route.pointAt(s);
       vehicle.body.setTranslation({x:p.x+Math.cos(p.yaw)*lane,y:p.y+1,z:p.z-Math.sin(p.yaw)*lane},true);
       vehicle.progress=s;vehicle.lastAnchor=s;
@@ -51,10 +52,11 @@ export class Race {
     let lane=r.preferredLane;
     const ahead=this.racers.find(other=>other!==r && other.finishTime===null && other.vehicle.progress>car.progress && other.vehicle.progress-car.progress<20 && Math.hypot(other.vehicle.body.translation().x-p.x,other.vehicle.body.translation().z-p.z)<22);
     if(ahead)lane=ahead.lane>=0?-4.5:4.5;
-    const technical=this.route.moduleAt(car.progress+25).definition.difficulty===3;
+    const module=this.route.moduleAt(car.progress+25),technical=module.definition.difficulty===3;
     if(technical)lane*=.5;
+    if(module.branches)lane=0;
     r.lane+=(lane-r.lane)*Math.min(1,dt*1.5);
-    const target=this.route.pointAt(car.progress+6+car.speed*.32);
+    const target=car.route.pointAt(car.progress+6+car.speed*.32);
     const tx=target.x+Math.cos(target.yaw)*r.lane,tz=target.z-Math.sin(target.yaw)*r.lane;
     const desired=Math.atan2(-(tx-p.x),-(tz-p.z));
     const error=Math.atan2(Math.sin(desired-car.yaw),Math.cos(desired-car.yaw));

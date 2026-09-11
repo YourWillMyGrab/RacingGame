@@ -1,7 +1,7 @@
 export interface Socket { x: number; y: number; z: number; yaw: number; grade: number; width: number }
 export interface RoadModule {
   id: string;
-  category: 'straight' | 'curve' | 's-curve' | 'crest' | 'tunnel' | 'bridge' | 'start' | 'finish';
+  category: 'straight' | 'curve' | 's-curve' | 'crest' | 'tunnel' | 'bridge' | 'start' | 'finish' | 'fork';
   biomeTags: string[];
   length: number;
   width: number;
@@ -48,6 +48,10 @@ export const MODULES: readonly RoadModule[] = [
   define('harbor-switchbacks','s-curve',125,0,.92,0,true),
   define('finish-straight','finish',150),
 ];
+
+// Explicitly placed by the director, never randomly inserted into the old modes.
+export const FORK_MODULE={...define('coastal-choice','fork',300),minWidth:12,curvature:26*2*Math.PI**2/300**2};
+export const SPEED_RELEASE=define('coastal-express','straight',180);
 
 export function validateModule(m: RoadModule): string[] {
   const errors: string[]=[];

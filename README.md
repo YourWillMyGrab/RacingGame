@@ -72,7 +72,7 @@ I rivali usano lo stesso modello fisico, con ritmo, linea preferita e aggressivi
 - `src/config.ts`: parametri in unità SI, fisica a 60 Hz.
 - `src/vehicle.ts`: corpo Rapier, quattro raggi sospensione, grip, derapata, Flow, danni, recupero ed eventi.
 - `src/input.ts`: tastiera e controller standard.
-- `src/road/`: profili modulari, socket, seed, validazione, assemblaggio e streaming.
+- `src/road/`: profili modulari, socket, seed, validazione, assemblaggio e streaming; `fork.ts` definisce i due rami e `RouteCursor` mantiene la scelta di ogni auto.
 - `src/race.ts`: griglia, AI, checkpoint e arrivi.
 - `src/events.ts`, `src/upgrades.ts`, `src/run.ts`: hook rimovibili, dati dei potenziamenti e stato temporaneo.
 - `src/game.ts`: rendering, HUD e flusso della run; `src/lab.ts` conserva il laboratorio iniziale.
@@ -82,8 +82,14 @@ Il pannello telemetria mostra chunk, collisioni, caricamenti/scaricamenti, ID de
 
 ## Limiti attuali
 
-Questa è la slice costiera M4, non il gioco completo da 20–30 minuti. Le gare passano attraverso risultati/ricompense e ricreano la strada successiva. Bivi fisici, continuità senza ricostruzione, altri eventi, boss, altri biomi, salti, audio e rifinitura visiva appartengono ai prossimi milestone.
+Questa è la slice costiera M4, non il gioco completo da 20–30 minuti. Le gare passano attraverso risultati/ricompense e ricreano la strada successiva. Il primo bivio fisico con ricongiungimento è integrato in M5.1. Continuità senza ricostruzione, altri tipi di evento, boss, altri biomi, salti, audio e rifinitura visiva appartengono ai prossimi task.
 
 Il generatore `road-v2` introduce almeno tre settori tecnici nelle gare della partita: chicane ed esse che si restringono fino a 12 metri, con avvisi anticipati di frenata a 50 km/h. L’aderenza laterale ha un limite fisico: entrare troppo forte fa perdere la linea. Il cambio di versione modifica i percorsi dei vecchi codici; la ripetibilità resta garantita nella stessa versione.
 
 Le strade avanzano in un corridoio senza autointersezioni: curve, esse, dossi moderati, tunnel e ponti. La geometria e le collisioni vengono caricate davanti e scaricate dietro; i metadati leggeri sono generati in anticipo. Rollio/beccheggio sono assistiti e visivi. Vedi `PROJECT_STATE.md` e `KNOWN_ISSUES.md` per il checkpoint e i limiti precisi.
+
+## Bivi M5.1
+
+La scelta avviene guidando, con cartelli a 100 e 30 metri dal bivio e un avviso nel cruscotto. I due rami sono larghi 12 metri, separati fisicamente, e tornano sulla stessa carreggiata. Anche i rivali scelgono un ramo. Il profilo tecnico aggiunge curve ed esse più impegnative; quello veloce allunga i rettilinei, conservando i settori di frenata. Entrambi sono ancora gare su strada: la cronometro è M5.2.
+
+Il recupero conserva il ramo scelto. Una nuova partita cancella scelte, profili e potenziamenti. I codici sono ripetibili nella stessa versione e con le stesse scelte. Lo stress verifica 1.000 bivi e i test fisici attraversano entrambi i rami, controllano il vuoto centrale e la rimozione delle collisioni.

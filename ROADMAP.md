@@ -9,7 +9,7 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 | 2 | Modular road | DONE |
 | 3 | One complete race | DONE |
 | 4 | Roguelike slice | DONE |
-| 5 | Physical forks, route choices, two event types and seamless world loop | TODO |
+| 5 | Physical forks, route choices, two event types and seamless world loop | IN_PROGRESS |
 | 6 | First dressed biome, boss, hazards and audio/VFX | TODO |
 | 7 | Full three-biome 20–30 minute run | TODO |
 | 8 | Expanded upgrades, chaos, event types and balance | TODO |
@@ -32,5 +32,8 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 | M4.1 | Temporary run state, 14 upgrades, rarity and removable event hooks | DONE |
 | M4.2 | Three-event run, reward UI, keyboard/controller selection, victory and reset | DONE |
 | M4 review | Braking sectors, accessible Flow, main menu and Italian player text | DONE |
+| M5.1 | Physical split/merge, independent player/AI routes and next-event profile choice | DONE |
+| M5.2 | Time Attack event alongside Road Race, with seeded goals and rewards | TODO |
+| M5.3 | Continuous event/world lifecycle across rewards and event boundaries | TODO |
 
-M4 is intentionally a short coastal slice. M5 has not started. No procedural approval is pending: the user accepted the first prototype and authorized continued development.
+M4 is intentionally a short coastal slice. M5.1 is complete; M5.2 and M5.3 remain. No procedural approval is pending: the user accepted the first prototype and authorized continued development.

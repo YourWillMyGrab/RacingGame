@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { ModularRoute, type PlacedModule } from './route';
 
-interface ChunkResources { group: THREE.Group; colliders: RAPIER.Collider[]; geometry: THREE.BufferGeometry[]; debug: THREE.Group }
+interface ChunkResources { group: THREE.Group; colliders: RAPIER.Collider[]; geometry: THREE.BufferGeometry[]; debug: THREE.Group; materials?:THREE.Material[]; textures?:THREE.Texture[] }
 export class RoadStream {
   readonly active=new Map<number,ChunkResources>();
   debug=false;
@@ -26,6 +26,7 @@ export class RoadStream {
     for(const chunk of this.active.values())chunk.debug.visible=this.debug;
   }
   private build(chunk:PlacedModule):ChunkResources {
+    if(chunk.branches)return this.buildFork(chunk);
     const group=new THREE.Group(),debug=new THREE.Group(),colliders:RAPIER.Collider[]=[],geometry:THREE.BufferGeometry[]=[];
     group.add(debug);debug.visible=this.debug;
     const vertices:number[]=[],indices:number[]=[];
@@ -78,12 +79,48 @@ export class RoadStream {
     }
     this.scene.add(group);return {group,colliders,geometry,debug};
   }
+  private buildFork(chunk:PlacedModule):ChunkResources {
+    const group=new THREE.Group(),debug=new THREE.Group(),colliders:RAPIER.Collider[]=[],geometry:THREE.BufferGeometry[]=[],materials:THREE.Material[]=[],textures:THREE.Texture[]=[];
+    group.add(debug);debug.visible=this.debug;
+    const box=new THREE.BoxGeometry(1,1,1);geometry.push(box);
+    const left=chunk.branches!.left,right=chunk.branches!.right,normal=new THREE.Vector3(Math.cos(chunk.entry.yaw),0,-Math.sin(chunk.entry.yaw));
+    const vertices:number[]=[],indices:number[]=[],instances=new Map<THREE.Material,THREE.Matrix4[]>();
+    const at=(i:number,offset:number)=>new THREE.Vector3((left[i].x+right[i].x)/2,left[i].y,(left[i].z+right[i].z)/2).addScaledVector(normal,offset);
+    const bounds=(i:number)=>{const d=Math.hypot(left[i].x-right[i].x,left[i].z-right[i].z)/2,halfWidth=6/Math.cos(left[i].yaw-chunk.entry.yaw);return [-Math.max(10,d+halfWidth),Math.min(0,halfWidth-d),Math.max(0,d-halfWidth),Math.max(10,d+halfWidth)];};
+    const beam=(a:THREE.Vector3,b:THREE.Vector3,width:number,height:number,material:THREE.Material,physical=false)=>{
+      const length=a.distanceTo(b),mesh=new THREE.Mesh(box,material);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.position.y+=height/2;mesh.scale.set(width,height,length+.04);mesh.rotation.y=Math.atan2(b.x-a.x,b.z-a.z);mesh.updateMatrix();const batch=instances.get(material)??[];batch.push(mesh.matrix.clone());instances.set(material,batch);
+      if(physical)colliders.push(this.world.createCollider(RAPIER.ColliderDesc.cuboid(width/2,height/2,(length+.04)/2).setTranslation(mesh.position.x,mesh.position.y,mesh.position.z).setRotation(mesh.quaternion).setFriction(.04)));
+    };
+    for(let i=0;i<left.length-1;i++){
+      const a=bounds(i),b=bounds(i+1);
+      // Two strips meet at the centre before/after the island, never overlap.
+      for(const side of [0,2]){const base=vertices.length/3;for(const p of [at(i,a[side]),at(i,a[side+1]),at(i+1,b[side]),at(i+1,b[side+1])])vertices.push(p.x,p.y,p.z);indices.push(base,base+1,base+2,base+1,base+3,base+2);}
+      for(const edge of [0,3])beam(at(i,a[edge]),at(i+1,b[edge]),.5,1,this.wall,true);
+      if(a[2]-a[1]>.8&&b[2]-b[1]>.8)for(const edge of [1,2])beam(at(i,a[edge]),at(i+1,b[edge]),.45,1,this.white,true);
+      if(i%3===0)for(const arm of [left,right]){const p=new THREE.Vector3(arm[i].x,arm[i].y+.025,arm[i].z),q=new THREE.Vector3(arm[i+1].x,arm[i+1].y+.025,arm[i+1].z);beam(p,q,.15,.025,this.white);}
+      if(i%20===0)for(const arm of [left,right]){const mesh=new THREE.Mesh(box,this.debugMat);mesh.position.set(arm[i].x,arm[i].y+.5,arm[i].z);mesh.scale.set(2,1,2);debug.add(mesh);}
+    }
+    const road=new THREE.BufferGeometry();road.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));road.setIndex(indices);road.computeVertexNormals();geometry.push(road);group.add(new THREE.Mesh(road,this.road));
+    colliders.push(this.world.createCollider(RAPIER.ColliderDesc.trimesh(new Float32Array(vertices),new Uint32Array(indices)).setFriction(.1)));
+    if(typeof document!=='undefined')for(const distance of [100,30])for(const [side,label,detail] of [[-1,'↖ TECNICA','PIÙ CURVE'],[1,'VELOCE ↗','PIÙ RETTILINEI']] as const){
+      const canvas=document.createElement('canvas');canvas.width=640;canvas.height=320;const ctx=canvas.getContext('2d')!;
+      ctx.fillStyle='#12343e';ctx.fillRect(0,0,640,320);ctx.strokeStyle='#8df7df';ctx.lineWidth=10;ctx.strokeRect(5,5,630,310);ctx.textAlign='center';ctx.fillStyle='#dffaf2';ctx.font='bold 40px sans-serif';ctx.fillText('PROSSIMA GARA',320,63);ctx.font='bold 75px sans-serif';ctx.fillText(label,320,170);ctx.font='38px sans-serif';ctx.fillText(detail,320,252);
+      const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;textures.push(texture);const material=new THREE.MeshBasicMaterial({map:texture});materials.push(material);
+      const geo=new THREE.PlaneGeometry(8,4);geometry.push(geo);const sign=new THREE.Mesh(geo,material),p=this.route.pointAt(chunk.start-distance);
+      sign.position.set(p.x+Math.cos(p.yaw)*side*5,p.y+6,p.z-Math.sin(p.yaw)*side*5);sign.rotation.y=p.yaw;group.add(sign);
+      const base=new THREE.Vector3(p.x+Math.cos(p.yaw)*side*10.6,p.y,p.z-Math.sin(p.yaw)*side*10.6);beam(base,base.clone().setY(base.y+.01),.4,8,this.structure);
+      const cross=new THREE.Mesh(box,this.white);cross.scale.set(22,.25,.3);cross.position.set(p.x,p.y+8,p.z);cross.rotation.y=p.yaw;group.add(cross);
+    }
+    for(const [material,matrices] of instances){const mesh=new THREE.InstancedMesh(box,material,matrices.length);matrices.forEach((m,i)=>mesh.setMatrixAt(i,m));group.add(mesh);}
+    this.scene.add(group);return {group,debug,colliders,geometry,materials,textures};
+  }
   private remove(index:number) {
     const r=this.active.get(index)!;
     for(const collider of r.colliders)this.world.removeCollider(collider,true);
     this.scene.remove(r.group);
     r.group.traverse(object=>{if(object instanceof THREE.InstancedMesh)object.dispose();});
     for(const geometry of r.geometry)geometry.dispose();
+    for(const material of r.materials??[])material.dispose();for(const texture of r.textures??[])texture.dispose();
     this.active.delete(index);this.unloaded++;
   }
   dispose() {for(const i of [...this.active.keys()])this.remove(i);for(const mat of [this.road,this.wall,this.white,this.structure,this.debugMat])mat.dispose();this.signMaterial?.dispose();this.signTexture?.dispose();}

@@ -31,3 +31,7 @@
 - The main menu owns mode discovery, help and persisted view/resolution preferences. Audio controls are deferred until audio exists. No permanent run progression is introduced.
 
 - 2026-09-11: User authorized the next roadmap tasks. The previous M4-only stopping instruction is fulfilled and superseded. Start M5.1 with physical split/merge and next-event route profiles; M5 remains IN_PROGRESS until distinct event types and seamless continuation are implemented.
+
+- M5.1: one 300 m split/merge in the first two campaign races. Two equal-length 12 m arms share forward checkpoint stationing and select the NEXT event road profile (technical or speed), not an immediate change to the current race. The final event has no redundant choice.
+- Topology belongs to a per-vehicle RouteCursor. A choice commits from physical position after the fork mouth, stays locked through recovery and cannot be changed by another car. Both arms are streamed together; the central island is a real gap with inner barriers, not an invisible driveable shortcut.
+- Preserve road-v2 in standalone modes. Campaign fork/profile generation uses road-v3; profile also participates in the next-event seed. No distinct event-type or seamless-transition claim is made for M5.1.

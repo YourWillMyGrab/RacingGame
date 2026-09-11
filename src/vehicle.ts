@@ -40,6 +40,7 @@ export class Vehicle {
   private reverseArmed = false;
   private stopTime = 0;
   constructor(private world: RAPIER.World, readonly route:DrivableRoute=labRoute, readonly settings=t) {
+    this.route=route.cursor?.()??route;
     const p=route.pointAt(route.start);
     this.lastAnchor=route.start;this.progress=route.start;
     this.body=world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(p.x,p.y+1,p.z).setCanSleep(false).setCcdEnabled(true));
