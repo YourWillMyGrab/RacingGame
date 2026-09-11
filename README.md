@@ -2,6 +2,8 @@
 
 Gioco browser 3D in sviluppo: una prima run roguelike di **tre gare sulla costa**, con sei auto, strade modulari da seed e potenziamenti temporanei. La specifica completa rimane `ASTRA_RACING_ROGUELIKE_MASTER.md`.
 
+Per una valutazione aggiornata di punti di forza, rischi e priorità tecniche, vedi `DOC_REVIEW.md`.
+
 ## Avvio e verifiche
 
 Node.js 22.12+ e browser desktop con WebGL; sviluppo verificato con Node 24.11 e Chrome.
