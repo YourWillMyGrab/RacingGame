@@ -2,7 +2,7 @@
 
 Gioco browser 3D in sviluppo: una prima run roguelike di **tre gare sulla costa**, con sei auto, strade modulari da seed e potenziamenti temporanei. La specifica completa rimane `ASTRA_RACING_ROGUELIKE_MASTER.md`.
 
-Per una valutazione aggiornata di punti di forza, rischi e priorità tecniche, vedi `DOC_REVIEW.md`.
+Per le valutazioni aggiornate, vedi `DOC_REVIEW.md` per rischi e priorità tecniche e `GAMEPLAY_REVIEW.md` per l'analisi critica da game designer.
 
 ## Avvio e verifiche
 
