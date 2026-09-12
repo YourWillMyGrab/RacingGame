@@ -2,6 +2,7 @@
 
 - Current stable milestone: M5 in progress. M5.1 remains DONE and browser-validated.
 - Current work: M5.2 Time Attack implemented and automatically verified; browser gate pending. M5.2 is not yet DONE.
+- Last automatically verified implementation commit: 3613864c93b730739864968f0d0b9ea7fcba53a4 on codex/m5-2-time-attack. Its tree exactly matches the tested local tree; browser validation remains pending.
 - Starting commit: bd802257e8ba1b48f578a5c649f65d3ceb57d8e8, master after PR #1. The old 40d0a78 hash identifies the validated M5.1 gameplay, not the current repository head.
 - Last fully browser-validated gameplay checkpoint: 40d0a78, recorded by bfba80c; subsequent baseline commits add hosting/reviews. See CURRENT_TASK.md for current implementation checkpoint and exact resume instructions.
 
