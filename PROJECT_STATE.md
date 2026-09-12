@@ -20,12 +20,12 @@
 - Physical simulations: technical/left 87.67 s, Silver; speed/right 90.02 s, Silver. One recovery each. These are Rapier simulations, not browser runs or human balance evidence.
 - TypeScript check and production build pass; shared chunk remains about 3.40 MB / 1.23 MB gzip.
 - Stress passes: 1,000 road seeds / 32,000 modules / 1,000 forks, plus 1,000 mixed campaigns / 3,000 events / 1,489 Time Attacks with matching geometry, targets, results, offers and reset.
-- Browser run/menu attempts blocked before gameplay: no system Chrome; Playwright download timed out; alternate Chromium 153 crashed with SIGSEGV on an empty page. Browser/lap/modular/race suites were not rerun because the same runtime cannot launch. No new screenshot inspection or browser success is claimed.
+- Browser status in the current session: Chrome 153 boot smoke reaches menu/title/driving and reports six Road Race cars with no page exceptions. Standalone `test:race` timed out before 450 m after 45 s. `test:menu` produced menu, mobile-layout and braking-warning screenshots, then was stopped during its long virtual-time driving section. The mixed campaign and over-target suites were not completed; no full browser pass or Time Attack screenshot inspection is claimed. Software-rendered headless Chrome is too slow for the existing long-drive checks here.
 
 ## Resume
 
-1. Use working desktop Chrome/Chromium, run npm ci and npm run dev.
-2. Run npm run test:run, and TIME_ATTACK_OVERRUN=1 npm run test:run; inspect Time Attack HUD/result and fork/reward screenshots. Run menu and standalone browser regressions (commands below).
+1. Use a faster or hardware-accelerated Chrome/Chromium host, run npm ci and npm run dev.
+2. Finish npm run test:race and npm run test:menu; run npm run test:run and TIME_ATTACK_OVERRUN=1 npm run test:run; inspect Time Attack HUD/result and fork/reward screenshots. Run remaining standalone browser regressions (commands below).
 3. Repair any failures, rerun relevant automatic checks, then mark M5.2 DONE and commit a fully validated checkpoint.
 4. Only after that begin M5.3 continuous event/world lifecycle. No M5.3 implementation is included here.
 
