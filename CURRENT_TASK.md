@@ -3,7 +3,7 @@
 - Task id: M5.2-time-attack
 - Goal: Playable seeded Time Attack alongside Road Race in the existing three-event run.
 - Baseline commit: bd802257e8ba1b48f578a5c649f65d3ceb57d8e8 (master after PR #1).
-- Status: IN_PROGRESS — baseline inspected; implementation not yet started.
+- Status: IN_PROGRESS — implementation and automatic validation complete; browser validation blocked in this environment.
 - Baseline verification: clean checkout; 30/30 tests pass via `node --import tsx --test tests/*.test.ts`. The original tsx CLI failed to create its IPC socket (EPERM); no test failure. Dev server starts.
 - Files expected to change: src/race.ts, src/run.ts, src/game.ts, new event/session modules, tests, package scripts and state documents.
 
@@ -21,3 +21,13 @@
 ## Resume / discrepancies
 
 M5.1 is DONE. Old state docs name 40d0a78 as the validated gameplay hash; current baseline also includes hosting and PR #1 reviews. The claim of no GitHub remote/backup is stale. Review suggestions are not overrides of the master/DECISIONS: no initial upgrade, reward rebalance, asymmetric forks, boss, new Flow sources or seamless lifecycle in this task.
+
+## Implementation checkpoint
+
+- Added event/point-to-point.ts (shared physical lifecycle), event/time-attack.ts, event/rules.ts and event/session.ts (factory + Italian presentation). Road Race remains a six-car subclass; Time Attack uses one car.
+- Run.finish now accepts a discriminated event result. Reward settlement is unchanged; results retain event kind, actual time and Time Attack band/targets.
+- Verified so far: 37/37 automatic tests, TypeScript/Vite build, 1,000 road seeds / 32,000 modules / 1,000 forks plus 1,000 mixed campaigns / 3,000 events / 1,489 Time Attacks with matching targets/rewards/reset.
+- Physical Time Attack simulations passed both profiles/arms with one recovery and Flow/nitro: technical 87.67 s (Silver), speed 90.02 s (Silver). These are Rapier simulations, not browser playtests.
+- Browser blocker: system Chrome absent. Standard Playwright Chromium download timed out repeatedly. An alternate Chromium 153 package installed, but its executable exits with SIGSEGV even on about:blank; no gameplay page was exercised. test:run/test:menu attempted, not passed. Other browser suites share this launcher and remain unexecuted.
+- tests/browser.mjs supports BROWSER_CONFIG pointing to a Playwright launch-options JSON file, defaulting to system Chrome. Updated test:run asserts mixed events, target HUD, pause/countdown resources, results, rewards and reset. TIME_ATTACK_OVERRUN=1 additionally exercises late completion; RUN_SEED overrides the test seed. These additions are not claimed browser-validated.
+- Resume: run the browser suites on a host with working Chrome/Chromium and dev server; inspect Time Attack HUD/results screenshots and repair any failures. Only then mark M5.2 DONE and record a fully browser-validated checkpoint. Do not start M5.3 yet.

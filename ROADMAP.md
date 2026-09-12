@@ -33,7 +33,7 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 | M4.2 | Three-event run, reward UI, keyboard/controller selection, victory and reset | DONE |
 | M4 review | Braking sectors, accessible Flow, main menu and Italian player text | DONE |
 | M5.1 | Physical split/merge, independent player/AI routes and next-event profile choice | DONE |
-| M5.2 | Time Attack event alongside Road Race, with seeded goals and rewards | TODO |
+| M5.2 | Time Attack implemented; automatic tests/build/stress pass; browser gate pending | IN_PROGRESS |
 | M5.3 | Continuous event/world lifecycle across rewards and event boundaries | TODO |
 
-M4 is intentionally a short coastal slice. M5.1 is complete; M5.2 and M5.3 remain. No procedural approval is pending: the user accepted the first prototype and authorized continued development.
+M4 is intentionally a short coastal slice. M5.1 is complete; M5.2 awaits browser validation and M5.3 remains TODO. No procedural approval is pending: the user accepted the first prototype and authorized continued development.

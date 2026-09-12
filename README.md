@@ -1,6 +1,6 @@
 # Velocity Rogue
 
-Gioco browser 3D in sviluppo: una prima run roguelike di **tre gare sulla costa**, con sei auto, strade modulari da seed e potenziamenti temporanei. La specifica completa rimane `ASTRA_RACING_ROGUELIKE_MASTER.md`.
+Gioco browser 3D in sviluppo: una prima run roguelike di **tre eventi sulla costa**, con Road Race a sei auto, Time Attack in solitaria, strade modulari da seed e potenziamenti temporanei. La specifica completa rimane `ASTRA_RACING_ROGUELIKE_MASTER.md`.
 
 Per le valutazioni aggiornate, vedi `DOC_REVIEW.md` per rischi e priorità tecniche e `GAMEPLAY_REVIEW.md` per l'analisi critica da game designer.
 
@@ -42,12 +42,12 @@ I test browser salvano screenshot in `test-results/` (ignorata da Git). Usano ta
 
 | URL | Modalità |
 |---|---|
-| `/` | Menu principale: partita di tre gare, modalità, comandi e impostazioni |
+| `/` | Menu principale: partita di tre eventi, modalità, comandi e impostazioni |
 | `/?race=1` | Gara singola a sei auto |
 | `/?solo=1` | Percorso modulare in solitaria |
 | `/?lab=1` | Circuito ovale originale e tuning live |
 
-Dal menu puoi anche aprire comandi e impostazioni di visuale/risoluzione, conservate nel browser. Inserisci il codice percorso nella schermata di avvio o aggiungi `seed=7F2C-A91D` ai parametri URL. La stessa versione e seed riproducono strade, rivali e ricompense (a parità di piazzamento e scelte). La run derapata un seed separato per ogni evento. Il circuito di laboratorio è fisso.
+Dal menu puoi anche aprire comandi e impostazioni di visuale/risoluzione, conservate nel browser. Inserisci il codice percorso nella schermata di avvio o aggiungi `seed=7F2C-A91D` ai parametri URL. La stessa versione e seed riproducono strade, rivali e ricompense (a parità di piazzamento e scelte). La run deriva un seed separato per ogni evento. Il circuito di laboratorio è fisso.
 
 ## Controlli
 
@@ -69,11 +69,11 @@ In gara, il recupero cerca un punto libero e ferma l'auto per tre secondi, già 
 
 ## Run e potenziamenti
 
-Le prime due gare offrono una scelta fra tre potenziamenti. I primi tre classificati recuperano fino a 8 integrità; i piazzamenti inferiori perdono 8 integrità (resta almeno 1) e ricevono ricompense di rarità ridotta. Integrità e Flow passano alla gara successiva.
+I primi due eventi offrono una scelta fra tre potenziamenti. I primi tre classificati recuperano fino a 8 integrità; i piazzamenti inferiori perdono 8 integrità (resta almeno 1) e ricevono ricompense di rarità ridotta. Integrità e Flow passano all’evento successivo.
 
 La libreria iniziale comprende 14 potenziamenti, sei categorie di rarità e svantaggi espliciti per le maledizioni. Le direzioni di build comprendono derapata/Flow, massa/impatti e potenza a bassa integrità. Statistiche ed effetti vengono rimossi iniziando una nuova run. Non esiste progressione permanente.
 
-I rivali usano lo stesso modello fisico, con ritmo, linea preferita e aggressività derapatati dal seed. Frenano per le curve, cercano una linea di sorpasso e recuperano se bloccati. I checkpoint devono essere attraversati in ordine. Dopo l'arrivo del giocatore, gli altri continuano fino a 30 secondi: la classifica distingue tempi registrati, ritiri, piloti in pista e fuori tempo. Le auto arrivate non bloccano fisicamente gli altri piloti.
+I rivali usano lo stesso modello fisico, con ritmo, linea preferita e aggressività derivati dal seed. Frenano per le curve, cercano una linea di sorpasso e recuperano se bloccati. I checkpoint devono essere attraversati in ordine. Dopo l'arrivo del giocatore, gli altri continuano fino a 30 secondi: la classifica distingue tempi registrati, ritiri, piloti in pista e fuori tempo. Le auto arrivate non bloccano fisicamente gli altri piloti.
 
 ## Architettura
 
@@ -81,7 +81,8 @@ I rivali usano lo stesso modello fisico, con ritmo, linea preferita e aggressivi
 - `src/vehicle.ts`: corpo Rapier, quattro raggi sospensione, grip, derapata, Flow, danni, recupero ed eventi.
 - `src/input.ts`: tastiera e controller standard.
 - `src/road/`: profili modulari, socket, seed, validazione, assemblaggio e streaming; `fork.ts` definisce i due rami e `RouteCursor` mantiene la scelta di ogni auto.
-- `src/race.ts`: griglia, AI, checkpoint e arrivi.
+- `src/event/`: simulazione PointToPoint, Time Attack, obiettivi/risultati deterministici e presentazione italiana.
+- `src/race.ts`: Road Race a sei auto sul ciclo fisico condiviso.
 - `src/events.ts`, `src/upgrades.ts`, `src/run.ts`: hook rimovibili, dati dei potenziamenti e stato temporaneo.
 - `src/game.ts`: rendering, HUD e flusso della run; `src/lab.ts` conserva il laboratorio iniziale.
 - `tests/`: regressioni fisiche/logiche, stress e prove browser riproducibili.
@@ -90,7 +91,7 @@ Il pannello telemetria mostra chunk, collisioni, caricamenti/scaricamenti, ID de
 
 ## Limiti attuali
 
-Questa è la slice costiera M4, non il gioco completo da 20–30 minuti. Le gare passano attraverso risultati/ricompense e ricreano la strada successiva. Il primo bivio fisico con ricongiungimento è integrato in M5.1. Continuità senza ricostruzione, altri tipi di evento, boss, altri biomi, salti, audio e rifinitura visiva appartengono ai prossimi task.
+Questa è la slice costiera durante M5, non il gioco completo da 20–30 minuti. Le gare passano attraverso risultati/ricompense e ricreano la strada successiva. Il primo bivio fisico con ricongiungimento è integrato in M5.1. Continuità senza ricostruzione, ulteriori tipi di evento, boss, altri biomi, salti, audio e rifinitura visiva appartengono ai prossimi task.
 
 Il generatore `road-v2` introduce almeno tre settori tecnici nelle gare della partita: chicane ed esse che si restringono fino a 12 metri, con avvisi anticipati di frenata a 50 km/h. L’aderenza laterale ha un limite fisico: entrare troppo forte fa perdere la linea. Il cambio di versione modifica i percorsi dei vecchi codici; la ripetibilità resta garantita nella stessa versione.
 
@@ -98,6 +99,12 @@ Le strade avanzano in un corridoio senza autointersezioni: curve, esse, dossi mo
 
 ## Bivi M5.1
 
-La scelta avviene guidando, con cartelli a 100 e 30 metri dal bivio e un avviso nel cruscotto. I due rami sono larghi 12 metri, separati fisicamente, e tornano sulla stessa carreggiata. Anche i rivali scelgono un ramo. Il profilo tecnico aggiunge curve ed esse più impegnative; quello veloce allunga i rettilinei, conservando i settori di frenata. Entrambi sono ancora gare su strada: la cronometro è M5.2.
+La scelta avviene guidando, con cartelli a 100 e 30 metri dal bivio e un avviso nel cruscotto. I due rami sono larghi 12 metri, separati fisicamente, e tornano sulla stessa carreggiata. Anche i rivali scelgono un ramo. Il profilo tecnico aggiunge curve ed esse più impegnative; quello veloce allunga i rettilinei, conservando i settori di frenata. Il profilo si applica sia alle gare su strada sia alla Time Attack.
 
 Il recupero conserva il ramo scelto. Una nuova partita cancella scelte, profili e potenziamenti. I codici sono ripetibili nella stessa versione e con le stesse scelte. Lo stress verifica 1.000 bivi e i test fisici attraversano entrambi i rami, controllano il vuoto centrale e la rimozione delle collisioni.
+
+## Time Attack M5.2 — implementata, collaudo browser da completare
+
+La run propone Road Race → Time Attack → un evento scelto dal seed fra i due tipi. La cronometro ha tre obiettivi fissi, calcolati dalla strada/profilo e da uno stream del seed indipendente dagli upgrade. L’HUD mostra soglie e tempo residuo per la migliore fascia ancora raggiungibile. Oro dà le ricompense del primo posto, Argento quelle del terzo, Bronzo/fuori obiettivo quelle del sesto. Superare il tempo non termina la run: puoi ancora raggiungere il traguardo. A integrità zero la run termina. L’ultimo evento non dà un terzo upgrade o una riparazione finale.
+
+37 test automatici, build e stress su 1.000 percorsi più 1.000 run miste passano. Il browser dell’ambiente di sviluppo non si avvia: M5.2 resta IN_PROGRESS fino alla verifica di HUD, comandi e run completa in Chrome/Chromium funzionante. I test possono usare `BROWSER_CONFIG=/percorso/config.json`, un file JSON di opzioni Playwright, per esempio `{"executablePath":"/percorso/chromium","headless":true}`. Senza configurazione usano Chrome. `TIME_ATTACK_OVERRUN=1 npm run test:run` controlla anche l’arrivo oltre il Bronzo; `RUN_SEED` cambia il seed del test.
