@@ -1,22 +1,17 @@
 # Current Task
 
-- Task id: M5.2-browser-validation
-- Goal: Complete the pending browser gate for the existing seeded Time Attack implementation in PR #2.
-- Status: DONE — 2026-09-13, locally validated and ready for review.
-- Baseline / fully validated gameplay: `b501508` on `codex/m5-2-browser-validation`; integrates the M5.2 implementation `3613864` and preserves local documentation plus `origin/master`.
-- Scope: recovered the diverged local checkout, resolved documentation conflicts, ran the complete M5.2 validation and updated project state. No gameplay code, test assertions or timeout thresholds were changed.
+- Task id: M5.3-world-continuity
+- Goal: preserve world, streamed road, player body and camera across rewards; drive from each finish to the next event on connected seeded road.
+- Status: IN_PROGRESS — 2026-09-13.
+- Baseline: `6459ea6`; fetched origin and merged origin/master (already included). Clean working tree; 37/37 baseline tests passed.
+- Branch: `codex/m5-3-world-continuity`.
+- Expected files: road connection, event lifecycle, vehicle/build handling, game coordinator, regression/browser tests and state documentation.
 
-## Acceptance evidence
+## Acceptance criteria
 
-1. `npm test`: 37/37; `npm run build`: pass; `npm run test:stress -- 1000`: 1,000 roads / 32,000 modules / 1,000 forks plus 1,000 mixed campaigns / 3,000 events / 1,489 Time Attacks.
-2. All browser suites passed on Windows with default headless Chrome 153.0.8010.36: menu, input/drift/boost/recovery, lap, modular route, standalone race and full mixed run.
-3. Normal campaign: Road Race 89.50 s, Time Attack Silver 90.98 s, final Time Attack Gold 102.03 s. Both physical arms and recovery, profile changes, two rewards and clean reset passed.
-4. Over-target campaign: event 2 finished at 210.28 s, reduced rewards and -8 integrity applied, final event completed at 102.03 s, victory/reset passed. Exceeding Bronze did not terminate the run.
-5. Time Attack targets, countdown/pause resources, result text, absence of fake standings, reward screens, fork signs and narrow menu were checked. Screenshots inspected; no page exceptions.
-6. Exact environment, commands, results and limitations are recorded in `BROWSER_VALIDATION.md`.
-
-## Resume
-
-M5.1 and M5.2 are DONE. The next micro-milestone is M5.3: continuous event/world lifecycle across rewards and event boundaries. Before implementing it, read the state files and master specification, inspect Git status/diff, run the quick baseline checks and replace this task with explicit lifecycle acceptance criteria. Preserve mixed-event, fork, resource/reset and browser regressions. M5.3 was not started in this checkpoint.
-
-The completion is local; the remote PR #2 and Pages deployment were not updated by this validation. Physical-controller testing, human balance and production performance remain outstanding, not browser-gate blockers.
+1. One Rapier world, player/body and RoadStream per run. Rewards preserve player pose and nearby road resources; no camera reset or loading screen.
+2. Next seeded road connects at matching sockets. Drive the transfer to the next starting gate, then a fresh countdown and ordered checkpoints. Transfer is excluded from competitive time; pause freezes it.
+3. Preserve integrity/Flow/builds and branch-derived profiles. Update stats and physical mass on the existing body without accumulating hooks. Freeze finished resources/pose during results/rewards.
+4. Retire old rivals and stream old road away; spawn the correct next participants. Recovery crosses seams safely; transfer failure and new-run reset leave no stale state.
+5. Physical/lifecycle regressions, build, 1,000-seed stress and browser mixed campaigns (both finales, normal/over-target), plus standalone/input/menu regressions pass. Inspect transition/reward screenshots.
+6. Update state files and commit validated M5.3 only. M6 is out of scope.
