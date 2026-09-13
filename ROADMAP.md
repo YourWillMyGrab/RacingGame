@@ -1,6 +1,6 @@
 # Roadmap
 
-Last reviewed: 2026-09-13. M5.1 and M5.2 are validated locally; the next task is M5.3.
+Last reviewed: 2026-09-13. M5.1, M5.2 and M5.3 are validated locally; M5 is complete. Next milestone: M6.
 
 Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 
@@ -11,7 +11,7 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 | 2 | Modular road | DONE |
 | 3 | One complete race | DONE |
 | 4 | Roguelike slice | DONE |
-| 5 | Physical forks, route choices, two event types and seamless world loop | IN_PROGRESS |
+| 5 | Physical forks, route choices, two event types and seamless world loop | DONE |
 | 6 | First dressed biome, boss, hazards and audio/VFX | TODO |
 | 7 | Full three-biome 20–30 minute run | TODO |
 | 8 | Expanded upgrades, chaos, event types and balance | TODO |
@@ -36,6 +36,6 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 | M4 review | Braking sectors, accessible Flow, main menu and Italian player text | DONE |
 | M5.1 | Physical split/merge, independent player/AI routes and next-event profile choice | DONE |
 | M5.2 | Seeded Time Attack; automatic/build/stress and full normal/over-target browser gates passed | DONE |
-| M5.3 | Continuous event/world lifecycle across rewards and event boundaries | TODO |
+| M5.3 | Continuous event/world lifecycle across rewards and event boundaries | DONE |
 
-M4 is intentionally a short coastal slice. M5.1 and M5.2 are complete; M5.3 remains TODO. No procedural approval is pending: the user accepted the first prototype and authorized continued development.
+M4 is intentionally a short coastal slice. M5.1, M5.2 and M5.3 are complete. M6 has not been started. No procedural approval is pending: the user accepted the first prototype and authorized continued development.

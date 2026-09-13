@@ -47,5 +47,9 @@ export class Run {
     if(this.phase!=='reward'||!this.offers.some(u=>u.id===id))throw new Error('Upgrade was not offered');
     this.owned.push(id);this.offers=[];this.event++;this.profile=this.nextProfile;this.nextProfile='balanced';this.phase='race';
   }
+  failTransfer(flow:number){
+    if(this.phase!=='race')throw new Error('Run is not active');
+    this.integrity=0;this.flow=flow;this.offers=[];this.phase='failed';
+  }
   reset(){this.event=0;this.owned=[];this.integrity=100;this.flow=25;this.elapsed=0;this.phase='race';this.offers=[];this.results=[];this.profile='balanced';this.nextProfile='balanced';this.routeChoices=[];}
 }

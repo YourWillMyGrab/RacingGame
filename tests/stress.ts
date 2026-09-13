@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import {Run} from '../src/run.ts';
 import {timeTargets,timedResult} from '../src/event/rules.ts';
 import { ModularRoute } from '../src/road/route.ts';
+import {connectRoad} from '../src/road/connect.ts';
+import {validateConnection} from '../src/road/modules.ts';
 const count=Number(process.argv[2]??1000);
 if(!Number.isInteger(count)||count<1||count>100000)throw new Error('Supply a seed count between 1 and 100000');
 let modules=0, points=0, forks=0;
@@ -20,11 +22,19 @@ let timedEvents=0;
 for(let i=0;i<count;i++) {
  const a=new Run(`EVENT-STRESS-${i}`),b=new Run(`EVENT-STRESS-${i}`);
  assert.deepEqual(a.eventTypes,b.eventTypes);finales.add(a.eventTypes[2]);
+ let worldA:ModularRoute|undefined,worldB:ModularRoute|undefined;
  for(let event=0;event<3;event++) {
   assert.equal(a.routeSeed,b.routeSeed);
   const roadA=new ModularRoute(a.routeSeed,a.moduleCount,a.routeOptions),roadB=new ModularRoute(b.routeSeed,b.moduleCount,b.routeOptions);
   assert.deepEqual(roadA.points,roadB.points);
   const targets=timeTargets(roadA);assert.deepEqual(targets,timeTargets(roadB));
+  if(worldA&&worldB){
+   const end={...worldA.chunks.at(-1)!.exit};connectRoad(worldA,roadA);connectRoad(worldB,roadB);
+   assert.ok(validateConnection(end,roadA.chunks[0].entry));assert.deepEqual(roadA.points,roadB.points);
+   assert.deepEqual(timeTargets(roadA),targets);assert.equal(new Set(worldA.chunks.map(c=>c.index)).size,worldA.chunks.length);
+   assert.deepEqual(worldA.validate(),[]);assert.deepEqual(roadA.validate(),[]);
+   assert.ok(worldA.points.every((p,j)=>j===0||p.z<worldA!.points[j-1].z),'the coastal campaign keeps advancing without doubling back');
+  }else{worldA=roadA;worldB=roadB;}
   const position=[1,3,6][i%3];
   const result=a.eventType==='road-race'?{kind:'road-race' as const,position,time:90}:timedResult([targets.gold,targets.silver,targets.bronze,targets.bronze+1][i%4],targets);
   if(result.kind==='time-attack')timedEvents++;
@@ -37,4 +47,4 @@ for(let i=0;i<count;i++) {
  }
  a.reset();assert.deepEqual(a.results,[]);assert.deepEqual(a.routeChoices,[]);assert.equal(a.flow,25);assert.equal(a.integrity,100);
 }
-console.log(JSON.stringify({campaignSeeds:count,events:count*3,timedEvents,finales:[...finales],deterministicTargetsRewardsAndReset:true},null,2));
+console.log(JSON.stringify({campaignSeeds:count,events:count*3,connectedBoundaries:count*2,timedEvents,finales:[...finales],deterministicTargetsRewardsAndReset:true},null,2));

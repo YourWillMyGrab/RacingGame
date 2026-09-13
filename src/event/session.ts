@@ -6,8 +6,8 @@ import { TimeAttack } from './time-attack';
 import { BAND_LABEL, EVENT_LABEL, formatSeconds, targetText, timeBand, type EventKind } from './rules';
 
 export type CompetitiveEvent=Race|TimeAttack;
-export function createEvent(kind:EventKind,route:ModularRoute,world:RAPIER.World,player:Vehicle):CompetitiveEvent {
-  return kind==='time-attack'?new TimeAttack(route,world,player):new Race(route,world,player);
+export function createEvent(kind:EventKind,route:ModularRoute,world:RAPIER.World,player:Vehicle,preservePlayer=false):CompetitiveEvent {
+  return kind==='time-attack'?new TimeAttack(route,world,player,preservePlayer):new Race(route,world,player,preservePlayer);
 }
 
 /** Event-specific Italian presentation stays outside the rendering coordinator. */

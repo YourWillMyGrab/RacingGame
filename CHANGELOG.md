@@ -1,5 +1,13 @@
 # Changelog
 
+## M5.3 continuous event/world lifecycle — 2026-09-13
+
+- Updated remote references; origin/master was already included. Preserved the local M5.2 validation baseline and implemented on `codex/m5-3-world-continuity`.
+- Keep one world, player body, camera and stream across rewards. Append seeded roads at matching sockets and drive the transfer into the next countdown without teleporting.
+- Preserve resources/builds, update physical mass and hooks in place, freeze finished cars, retire old rivals, stream old road away, and support transfer recovery/failure plus clean new-run reset.
+- Added global-station/rotated-frame validation and physical lifecycle regressions. Fixed retained Rapier velocity after Time Attack reward resume and old recovery penalties appearing on the transfer HUD.
+- 41 tests, build, 1,000-road/1,000-campaign stress (2,000 boundaries), all existing browser suites, normal campaign and over-target campaign with Road Race finale passed. Inspected screenshots; evidence in `M5_3_VALIDATION.md`. M5 is DONE locally; M6 not started.
+
 ## M5.2 browser gate completed locally — 2026-09-13
 
 - Pulled remote master while preserving the local documentation commit, resolved documentation conflicts and integrated the existing M5.2 implementation on `codex/m5-2-browser-validation` (gameplay baseline `b501508`).

@@ -11,9 +11,10 @@ import { STEP } from './config';
 import { IDLE } from './race';
 import {createEvent,eventView,type CompetitiveEvent} from './event/session';
 import {EVENT_LABEL} from './event/rules';
+import {EventJourney} from './event/journey';
 import { Run } from './run';
 import { RARITY_IT, FLOW_IT } from './text';
-import { UPGRADES, buildSettings, attachBuild } from './upgrades';
+import { UPGRADES, buildSettings } from './upgrades';
 
 export async function startGame() {
   await RAPIER.init();
@@ -37,7 +38,8 @@ export async function startGame() {
   const input=new Input(),camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,900),car=createCar();scene.add(car.root);
   let world:RAPIER.World,route:ModularRoute,stream:RoadStream,vehicle:Vehicle;
   let race:CompetitiveEvent|undefined;
-  let run:Run|undefined,detachBuild=()=>{},selectedReward=0;
+  let journey:EventJourney|undefined,worldGeneration=0;
+  let run:Run|undefined,selectedReward=0;
   const rivals:ReturnType<typeof createCar>[]=[];
   let state:'menu'|'help'|'settings'|'title'|'driving'|'paused'|'finished'|'wrecked'|'reward'='menu',elapsed=0,last=performance.now(),accumulator=0,fps=60,started=false;
   let menuSelection=0;
@@ -48,22 +50,33 @@ export async function startGame() {
   $('shake').onchange=()=>{preferences.stableCamera=$<HTMLInputElement>('shake').checked;savePreferences();};
   renderer.setPixelRatio(Math.min(devicePixelRatio,preferences.highQuality?1.5:1));
   const cameraTarget=new THREE.Vector3(),look=new THREE.Vector3();
-  function load(seed:string,continueRun=false) {
-    detachBuild();
-    if(campaign&&!continueRun)run=new Run(seed);
+  function clearRivalModels(){
     for(const model of rivals){scene.remove(model.root);model.root.traverse(object=>{if(object instanceof THREE.Mesh){object.geometry.dispose();for(const m of Array.isArray(object.material)?object.material:[object.material])m.dispose();}});}rivals.length=0;
+  }
+  function syncRivalModels(){
+    clearRivalModels();
+    for(const racer of race?.racers.slice(1)??[]){const model=createCar(racer.color);rivals.push(model);scene.add(model.root);}
+  }
+  function load(seed:string) {
+    journey?.dispose();journey=undefined;
+    if(campaign)run=new Run(seed);
+    clearRivalModels();
     if(stream)stream.dispose();if(world)world.free();
-    world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=STEP;
+    world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=STEP;worldGeneration++;
     route=new ModularRoute(run?.routeSeed??seed,run?.moduleCount??24,run?.routeOptions);stream=new RoadStream(route,scene,world);stream.update(route.start);
     vehicle=new Vehicle(world,route,buildSettings(run?.owned??[]));elapsed=0;accumulator=0;started=false;
-    if(run){vehicle.integrity=run.integrity;vehicle.flow=run.flow;detachBuild=attachBuild(vehicle,run.owned);}
+    if(run){vehicle.integrity=run.integrity;vehicle.flow=run.flow;}
     race=solo?undefined:createEvent(run?.eventType??'road-race',route,world,vehicle);
-    for(const racer of race?.racers.slice(1)??[]){const model=createCar(racer.color);rivals.push(model);scene.add(model.root);}
+    if(run)journey=new EventJourney(run,world,vehicle,route,race!);
+    syncRivalModels();
     const url=new URL(location.href);url.searchParams.set('seed',run?.seed??route.seed);history.replaceState(null,'',url);
     $('seed-label').textContent=`CODICE ${run?.seed??route.seed}`;
+    refreshEventHud();
+  }
+  function refreshEventHud(){
     $('objective').textContent=run?`EVENTO ${run.event+1} / ${run.totalEvents} · ${EVENT_LABEL[run.eventType]} · ${PROFILE_LABEL[run.profile]}`:solo?'ATTRAVERSA LA COSTA':'GARA SU STRADA · 6 PILOTI';
     $('event-targets').textContent=race?eventView(race).objective:'';
-    document.querySelector('.brand small')!.textContent=`01 — NEON COAST / ${race?eventView(race).label:'ALLENAMENTO'}`;
+    document.querySelector('.brand small')!.textContent=`01 — NEON COAST / ${journey?.transferring?'TRASFERIMENTO':race?eventView(race).label:'ALLENAMENTO'}`;
     $('build-hud').textContent=run?.owned.map(id=>UPGRADES.find(u=>u.id===id)!.name).join(' / ')??'';
   }
   const finish=()=>route.chunks.at(-1)!.start+30;
@@ -93,7 +106,7 @@ export async function startGame() {
     state=kind;$('overlay').hidden=false;
     const heading=kind==='paused'?'Un respiro.':kind==='finished'?(run?.phase==='complete'?'Costa conquistata.':race?eventView(race).heading:'Costa attraversata.'):'Fine corsa.';
     const standings=race && eventView(race).standings.length>0 && kind!=='paused'?'<ol id="standings" class="standings"></ol>':'';
-    $('overlay').innerHTML=`<article><p class="eyebrow">NEON COAST / CODICE ${run?.seed??route.seed}</p><h1>${heading}</h1><p>${kind==='paused'?'Il percorso ti aspetta.':`${Math.round(elapsed+(race?0:vehicle.penalty))} secondi · integrità ${Math.ceil(vehicle.integrity)}% · ${vehicle.recoveries} ${vehicle.recoveries===1?'recupero':'recuperi'}`}${run?.phase==='complete'?`<br>3 eventi completati · ${Math.round(run.elapsed)} s totali · ${run.owned.length} potenziamenti temporanei`:''}</p>${race?`<p class="event-details">${kind==='finished'&&run?.phase==='complete'?eventView(race).heading+'<br>':''}${eventView(race).details}</p>`:''}${standings}${kind==='paused'?'<button id="resume">RIPRENDI ↗</button>':''}${kind==='finished'&&run?.phase==='reward'?'<button id="claim-reward">SCEGLI UN POTENZIAMENTO ↗</button>':''}<button id="restart" class="${kind==='paused'||run?.phase==='reward'?'secondary':''}">${run?'NUOVA PARTITA CON LO STESSO CODICE':'RIPROVA LO STESSO PERCORSO'}</button><button id="menu" class="secondary">Menu principale</button></article>`;
+    $('overlay').innerHTML=`<article><p class="eyebrow">NEON COAST / CODICE ${run?.seed??route.seed}</p><h1>${heading}</h1><p>${kind==='paused'?'Il percorso ti aspetta.':`${Math.round(elapsed+(race||journey?0:vehicle.penalty))} secondi · integrità ${Math.ceil(vehicle.integrity)}% · ${vehicle.recoveries} ${vehicle.recoveries===1?'recupero':'recuperi'}`}${run?.phase==='complete'?`<br>3 eventi completati · ${Math.round(run.elapsed)} s negli eventi · ${run.owned.length} potenziamenti temporanei`:''}</p>${race?`<p class="event-details">${kind==='finished'&&run?.phase==='complete'?eventView(race).heading+'<br>':''}${eventView(race).details}</p>`:''}${standings}${kind==='paused'?'<button id="resume">RIPRENDI ↗</button>':''}${kind==='finished'&&run?.phase==='reward'?'<button id="claim-reward">SCEGLI UN POTENZIAMENTO ↗</button>':''}<button id="restart" class="${kind==='paused'||run?.phase==='reward'?'secondary':''}">${run?'NUOVA PARTITA CON LO STESSO CODICE':'RIPROVA LO STESSO PERCORSO'}</button><button id="menu" class="secondary">Menu principale</button></article>`;
     if(kind==='paused')$('resume').onclick=start;
     if($('claim-reward'))$('claim-reward').onclick=showRewards;
     $('restart').onclick=()=>{load(run?.seed??route.seed);start();};
@@ -103,22 +116,28 @@ export async function startGame() {
   function showRewards() {
     if(!run || run.phase!=='reward')return;
     state='reward';selectedReward=0;
-    $('overlay').innerHTML=`<article class="reward-screen"><p class="eyebrow">EVENTO ${run.event+1} COMPLETATO / CODICE ${run.seed}</p><h1>Potenzia la tua auto.</h1><p>Scegli 1 potenziamento. ${run.results.at(-1)!.position<=3?'Riparazione fino a 8 integrità tra gli eventi.':'−8 integrità per il risultato; ricompense di rarità ridotta.'}<br>Prossimo evento: ${EVENT_LABEL[run.eventTypes[run.event+1]]} · ${PROFILE_LABEL[run.nextProfile]} · scelta guidando al bivio.<br>Configurazione attuale: ${run.owned.map(id=>UPGRADES.find(u=>u.id===id)!.name).join(' / ')||'Auto base'}</p><div class="reward-grid">${run.offers.map((u,i)=>`<button class="reward-card rarity-${u.rarity}" data-reward="${i}"><small>${i+1} / ${RARITY_IT[u.rarity].toUpperCase()}</small><strong>${u.name}</strong><p>${u.description}</p>${u.downside?`<p class="downside">${u.downside}</p>`:''}<em>${u.tags.join(' / ')}</em></button>`).join('')}</div><p class="hint">1 / 2 / 3 oppure ← → e Invio · Controller: croce direzionale e A</p></article>`;
+    $('overlay').innerHTML=`<article class="reward-screen"><p class="eyebrow">EVENTO ${run.event+1} COMPLETATO / CODICE ${run.seed}</p><h1>Potenzia la tua auto.</h1><p>Scegli 1 potenziamento, poi riparti da qui e raggiungi la prossima partenza. ${run.results.at(-1)!.position<=3?'Riparazione fino a 8 integrità tra gli eventi.':'−8 integrità per il risultato; ricompense di rarità ridotta.'}<br>Prossimo evento: ${EVENT_LABEL[run.eventTypes[run.event+1]]} · ${PROFILE_LABEL[run.nextProfile]} · scelta guidando al bivio.<br>Configurazione attuale: ${run.owned.map(id=>UPGRADES.find(u=>u.id===id)!.name).join(' / ')||'Auto base'}</p><div class="reward-grid">${run.offers.map((u,i)=>`<button class="reward-card rarity-${u.rarity}" data-reward="${i}"><small>${i+1} / ${RARITY_IT[u.rarity].toUpperCase()}</small><strong>${u.name}</strong><p>${u.description}</p>${u.downside?`<p class="downside">${u.downside}</p>`:''}<em>${u.tags.join(' / ')}</em></button>`).join('')}</div><p class="hint">1 / 2 / 3 oppure ← → e Invio · Controller: croce direzionale e A</p></article>`;
     document.querySelectorAll<HTMLButtonElement>('[data-reward]').forEach(button=>button.onclick=()=>chooseReward(Number(button.dataset.reward)));
     highlightReward();
   }
   function highlightReward(){document.querySelectorAll('[data-reward]').forEach((button,i)=>button.classList.toggle('selected',i===selectedReward));}
-  function chooseReward(index:number){if(state!=='reward'||!run?.offers[index])return;run.choose(run.offers[index].id);load(run.seed,true);start();}
+  function chooseReward(index:number){
+    if(state!=='reward'||!run?.offers[index]||!journey)return;
+    journey.choose(run.offers[index].id);route=journey.route;race=journey.event;
+    syncRivalModels();elapsed=0;accumulator=0;
+    // Existing chunks, body pose and camera interpolation are deliberately retained.
+    stream.update(vehicle.progress);refreshEventHud();start();
+  }
   input.onNavigate=direction=>{if(state==='reward'){selectedReward=(selectedReward+direction+3)%3;highlightReward();}else if(state!=='driving'){const items=menuItems();if(items.length){menuSelection=(menuSelection+direction+items.length)%items.length;highlightMenu();}}};
   input.onChoice=chooseReward;
   input.onConfirm=()=>{if(state==='reward')chooseReward(selectedReward);else if(state!=='driving')menuItems()[menuSelection]?.click();};
   input.onPause=()=>{if(state==='driving')overlay('paused');else if(state==='paused')start();else if(['help','settings','title'].includes(state))mainMenu();else input.onConfirm();};
-  input.onRecover=()=>{if(state==='driving'){if(race){if(race.started)race.recover();}else vehicle.recover();}};
+  input.onRecover=()=>{if(state==='driving'){if(journey?.transferring)journey.recover();else if(race){if(race.started)race.recover();}else vehicle.recover();}};
   const pauseIfDriving=()=>{if(state==='driving')overlay('paused');};
   window.addEventListener('blur',pauseIfDriving);document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseIfDriving();});
   load(new URLSearchParams(location.search).get('seed')??'7F2C-A91D');if(!campaign||new URLSearchParams(location.search).has('setup'))title();else mainMenu();
   window.addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});
-  if(import.meta.env.DEV)Object.defineProperty(window,'__roadGame',{get:()=>({state,seed:route.seed,moduleCount:route.chunks.length,routeOptions:route.options,forks:route.chunks.filter(c=>c.branches).map(c=>({index:c.index,start:c.start,end:c.end})),branchChoices:vehicle.route instanceof RouteCursor?Array.from(vehicle.route.choices):[],progress:vehicle.progress,finish:finish(),elapsed,speed:vehicle.speed,integrity:vehicle.integrity,flow:vehicle.flow,flowEarned:vehicle.flowEarned,flowSource:vehicle.flowSource,contacts:vehicle.contacts,position:{...vehicle.body.translation()},yaw:vehicle.yaw,activeChunks:stream.active.size,createdChunks:stream.created,unloadedChunks:stream.unloaded,colliders:world.colliders.len(),recoveries:vehicle.recoveries,module:route.moduleAt(vehicle.progress).definition.id,run:run?{eventType:run.eventType,eventTypes:run.eventTypes,results:run.results,seed:run.seed,event:run.event,phase:run.phase,profile:run.profile,nextProfile:run.nextProfile,routeChoices:[...run.routeChoices],owned:[...run.owned],offers:run.offers.map(u=>u.id),elapsed:run.elapsed}:null,race:race?{kind:race.kind,result:race.result,countdown:race.countdown,position:race.position,checkpoint:race.player.checkpoint,order:race.order.map(r=>({...r})),racers:race.racers.map(r=>({id:r.id,progress:r.vehicle.progress,integrity:r.vehicle.integrity,finish:r.finishTime}))}:null})});
+  if(import.meta.env.DEV)Object.defineProperty(window,'__roadGame',{get:()=>({state,lifecycle:journey?.transferring?'transfer':'event',worldGeneration,bodyHandle:vehicle.body.handle,bodies:world.bodies.len(),routeStart:route.start,worldModules:stream.route.chunks.length,routePlacement:{station:route.chunks[0].start,index:route.chunks[0].index,socket:route.chunks[0].entry},seed:route.seed,moduleCount:route.chunks.length,routeOptions:route.options,forks:route.chunks.filter(c=>c.branches).map(c=>({index:c.index,start:c.start,end:c.end})),branchChoices:vehicle.route instanceof RouteCursor?Array.from(vehicle.route.choices):[],progress:vehicle.progress,finish:finish(),elapsed,speed:vehicle.speed,integrity:vehicle.integrity,flow:vehicle.flow,flowEarned:vehicle.flowEarned,flowSource:vehicle.flowSource,contacts:vehicle.contacts,position:{...vehicle.body.translation()},yaw:vehicle.yaw,activeChunks:stream.active.size,createdChunks:stream.created,unloadedChunks:stream.unloaded,colliders:world.colliders.len(),recoveries:vehicle.recoveries,module:route.moduleAt(vehicle.progress).definition.id,run:run?{eventType:run.eventType,eventTypes:run.eventTypes,results:run.results,seed:run.seed,event:run.event,phase:run.phase,profile:run.profile,nextProfile:run.nextProfile,routeChoices:[...run.routeChoices],owned:[...run.owned],offers:run.offers.map(u=>u.id),elapsed:run.elapsed}:null,race:race?{kind:race.kind,result:race.result,countdown:race.countdown,position:race.position,checkpoint:race.player.checkpoint,order:race.order.map(r=>({...r})),racers:race.racers.map(r=>({id:r.id,progress:r.vehicle.progress,integrity:r.vehicle.integrity,finish:r.finishTime}))}:null})});
   renderer.setAnimationLoop(()=>{
     const now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;fps+=(1/Math.max(.001,dt)-fps)*.05;
     const controls=input.sample();
@@ -126,10 +145,10 @@ export async function startGame() {
     stream.update(vehicle.progress,race?.racers.map(r=>r.vehicle.progress));
     if(state==='driving') {
       accumulator+=dt;
-      while(accumulator>=STEP){if(race){race.step(controls,STEP);elapsed=race.elapsed;}else{vehicle.step(controls,STEP);world.step();vehicle.afterStep();elapsed+=STEP;}accumulator-=STEP;
+      while(accumulator>=STEP){if(journey){journey.step(controls,STEP);if(race!==journey.event){race=journey.event;syncRivalModels();refreshEventHud();}elapsed=race?.elapsed??0;}else if(race){race.step(controls,STEP);elapsed=race.elapsed;}else{vehicle.step(controls,STEP);world.step();vehicle.afterStep();elapsed+=STEP;}accumulator-=STEP;
         if(run&&vehicle.route instanceof RouteCursor)for(const branch of vehicle.route.choices.values())run.selectRoute(branch);
-        if(vehicle.integrity<=0){if(run)run.finish(race!.result,0,vehicle.flow);overlay('wrecked');break;}
-        if(race?race.player.finishTime!==null:vehicle.progress>=finish()){if(race)elapsed=race.player.finishTime!;if(run)run.finish(race!.result,vehicle.integrity,vehicle.flow);overlay('finished');break;}
+        if(vehicle.integrity<=0){if(run&&run.phase==='race'&&race)run.finish(race.result,0,vehicle.flow);overlay('wrecked');break;}
+        if(!journey?.transferring&&(race?race.player.finishTime!==null:vehicle.progress>=finish())){if(race)elapsed=race.player.finishTime!;if(run)run.finish(race!.result,vehicle.integrity,vehicle.flow);overlay('finished');break;}
       }
     } else if(state==='finished' && race && race.awaitingRivals) {
       accumulator+=dt;
@@ -150,9 +169,9 @@ export async function startGame() {
     $('speed').textContent=Math.round(vehicle.speed*3.6).toString().padStart(3,'0');
     $<HTMLMeterElement>('flow').value=vehicle.flow;$('flow-value').textContent=Math.floor(vehicle.flow).toString();
     $<HTMLMeterElement>('health').value=vehicle.integrity;$('health-value').textContent=Math.ceil(vehicle.integrity).toString();
-    const total=elapsed+(race?0:vehicle.penalty);$('time').textContent=`${Math.floor(total/60).toString().padStart(2,'0')}:${(total%60).toFixed(1).replace('.',',').padStart(4,'0')}`;
+    const total=elapsed+(race||journey?0:vehicle.penalty);$('time').textContent=`${Math.floor(total/60).toString().padStart(2,'0')}:${(total%60).toFixed(1).replace('.',',').padStart(4,'0')}`;
     $('position').textContent=race?eventView(race).status:'';
-    $('progress-bar').style.width=`${Math.min(100,vehicle.progress/finish()*100)}%`;
+    $('progress-bar').style.width=`${Math.max(0,Math.min(100,(vehicle.progress-route.start)/(finish()-route.start)*100))}%`;
     const next=route.moduleAt(vehicle.progress+65).definition;
     $('cue').textContent=vehicle.boosting?'FLOW → NITRO':vehicle.drifting?'DERAPATA PULITA / +FLOW':`${Math.max(0,Math.round(finish()-vehicle.progress))} M ALL’ARRIVO · ${next.category==='curve'?(next.turn>0?'↰ CURVA A SINISTRA':'↱ CURVA A DESTRA'):next.flags.tunnel?'TUNNEL':next.flags.bridge?'PONTE':next.category==='crest'?'DOSSO':'STRADA LIBERA'}`;
     const zone=route.brakingZone(vehicle.progress);
@@ -166,6 +185,11 @@ export async function startGame() {
     if(race && !race.started)$('cue').textContent=state==='driving'?`${Math.ceil(race.countdown)} · PREPARATI`:eventView(race).label;
     else if(race && race.player.hold>0)$('cue').textContent=`RECUPERO · ${race.player.hold.toFixed(1).replace('.',',')} S`;
     else if(race && race.player.finishTime===null && vehicle.progress>race.player.checkpoint+8)$('cue').textContent='PUNTO DI CONTROLLO SALTATO · R / Y PER RECUPERARE';
+    if(journey?.transferring){
+      $('position').textContent='TRASFERIMENTO';$('event-targets').textContent='RAGGIUNGI IL PORTALE · IL CRONOMETRO PARTIRÀ DOPO IL COUNTDOWN';
+      $('cue').textContent=journey.hold>0?`RECUPERO · ${journey.hold.toFixed(1)} S`:`PROSSIMA PARTENZA TRA ${Math.max(0,Math.ceil(route.start-vehicle.progress))} M · ${EVENT_LABEL[run!.eventType]}`;
+      $('cue').classList.remove('braking','active');
+    }
     if($<HTMLDetailsElement>('dev').open)$('debug').textContent=`${fps.toFixed(0)} FPS · ${renderer.info.render.calls} draw calls\n${stream.active.size}/${route.chunks.length} chunks · ${world.bodies.len()} bodies\n${world.colliders.len()} colliders · queue 0\nLoaded ${stream.created} · unloaded ${stream.unloaded}\n${route.moduleAt(vehicle.progress).definition.id}\n${vehicle.contacts}/4 contacts · ${input.device}`;
   });
 }

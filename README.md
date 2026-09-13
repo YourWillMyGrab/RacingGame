@@ -26,7 +26,8 @@ Apri l'indirizzo mostrato da Vite, normalmente http://127.0.0.1:5173.
 - `CURRENT_TASK.md`: task attivo, criteri di accettazione e verifiche ancora da completare.
 - `KNOWN_ISSUES.md`: limiti riproducibili e copertura non certificata.
 - `DEVELOPMENT.md`: workflow locale, browser playtest e skill consigliate.
-- `BROWSER_VALIDATION.md`: ambiente, risultati e prove browser di M5.2, inclusa la run fuori tempo.
+- `BROWSER_VALIDATION.md`: prove storiche di M5.2.
+- `M5_3_VALIDATION.md`: verifiche della continuità del mondo, trasferimenti e run miste.
 - `ASTRA_RACING_ROGUELIKE_MASTER.md`: specifica di prodotto e protocollo di recupero.
 
 ## Pubblicazione su GitHub Pages
@@ -91,7 +92,8 @@ I rivali usano lo stesso modello fisico, con ritmo, linea preferita e aggressivi
 - `src/vehicle.ts`: corpo Rapier, quattro raggi sospensione, grip, derapata, Flow, danni, recupero ed eventi.
 - `src/input.ts`: tastiera e controller standard.
 - `src/road/`: profili modulari, socket, seed, validazione, assemblaggio e streaming; `fork.ts` definisce i due rami e `RouteCursor` mantiene la scelta di ogni auto.
-- `src/event/`: simulazione PointToPoint, Time Attack, obiettivi/risultati deterministici e presentazione italiana.
+- `src/event/`: simulazione PointToPoint, Time Attack, obiettivi/risultati deterministici, presentazione italiana e lifecycle continuo in `journey.ts`.
+- `src/road/connect.ts`: raccordo dei percorsi di evento con coordinate, distanze e identificativi globali.
 - `src/race.ts`: Road Race a sei auto sul ciclo fisico condiviso.
 - `src/events.ts`, `src/upgrades.ts`, `src/run.ts`: hook rimovibili, dati dei potenziamenti e stato temporaneo.
 - `src/game.ts`: rendering, HUD e flusso della run; `src/lab.ts` conserva il laboratorio iniziale.
@@ -101,7 +103,7 @@ Il pannello telemetria mostra chunk, collisioni, caricamenti/scaricamenti, ID de
 
 ## Limiti attuali
 
-Questa è la slice costiera durante M5, non il gioco completo da 20–30 minuti. Le gare passano attraverso risultati/ricompense e ricreano la strada successiva. Il primo bivio fisico con ricongiungimento è integrato in M5.1. Continuità senza ricostruzione, ulteriori tipi di evento, boss, altri biomi, salti, audio e rifinitura visiva appartengono ai prossimi task.
+Questa è la slice costiera durante M5, non il gioco completo da 20–30 minuti. Risultati e ricompense fermano brevemente l’auto nello stesso mondo; poi si guida fino alla partenza successiva. Il bivio fisico con ricongiungimento è integrato in M5.1. Ulteriori tipi di evento, boss, altri biomi, salti, audio e rifinitura visiva appartengono ai prossimi task.
 
 Il generatore `road-v2` introduce almeno tre settori tecnici nelle gare della partita: chicane ed esse che si restringono fino a 12 metri, con avvisi anticipati di frenata a 50 km/h. L’aderenza laterale ha un limite fisico: entrare troppo forte fa perdere la linea. Il cambio di versione modifica i percorsi dei vecchi codici; la ripetibilità resta garantita nella stessa versione.
 
@@ -117,4 +119,12 @@ Il recupero conserva il ramo scelto. Una nuova partita cancella scelte, profili 
 
 La run propone Road Race → Time Attack → un evento scelto dal seed fra i due tipi. La cronometro ha tre obiettivi fissi, calcolati dalla strada/profilo e da uno stream del seed indipendente dagli upgrade. L’HUD mostra soglie e tempo residuo per la migliore fascia ancora raggiungibile. Oro dà le ricompense del primo posto, Argento quelle del terzo, Bronzo/fuori obiettivo quelle del sesto. Superare il tempo non termina la run: puoi ancora raggiungere il traguardo. A integrità zero la run termina. L’ultimo evento non dà un terzo upgrade o una riparazione finale.
 
-37 test automatici, build e stress su 1.000 percorsi più 1.000 run miste passano. Il 2026-09-13 sono passate tutte le suite browser su Windows / Chrome 153: menu, input, giro nel laboratorio, streaming, gara singola e campagne miste normale/fuori tempo, fino a vittoria e reset. HUD, risultati e ricompense sono stati controllati nelle schermate. M5.2 è DONE in locale; il prossimo task è M5.3. Vedi `BROWSER_VALIDATION.md` per risultati e limiti, `DEVELOPMENT.md` per `BROWSER_CONFIG`, `RUN_SEED` e il comando PowerShell della variante fuori tempo.
+37 test automatici, build e stress su 1.000 percorsi più 1.000 run miste passano. Il 2026-09-13 sono passate tutte le suite browser su Windows / Chrome 153: menu, input, giro nel laboratorio, streaming, gara singola e campagne miste normale/fuori tempo, fino a vittoria e reset. HUD, risultati e ricompense sono stati controllati nelle schermate. M5.2 è DONE in locale; M5.3 aggiunge la continuità descritta sotto. Vedi `BROWSER_VALIDATION.md` per risultati e limiti, `DEVELOPMENT.md` per `BROWSER_CONFIG`, `RUN_SEED` e il comando PowerShell della variante fuori tempo.
+
+## Continuità del mondo M5.3
+
+La stessa auto e lo stesso mondo fisico accompagnano tutti e tre gli eventi. Durante risultati e ricompense la posizione resta ferma; scegli un potenziamento e riparti da quel punto. La strada successiva si raccorda alla precedente: percorri circa 145 metri fino al portale, poi attendi il nuovo countdown. Non ci sono teletrasporti o schermate di caricamento tra eventi.
+
+Il trasferimento è guidabile, consente recupero e pausa e mantiene attivi Flow, danni e potenziamenti. Il cronometro competitivo resta a zero fino alla fine del countdown. Il tempo totale della run somma soltanto i tre eventi. Integrità zero durante il trasferimento conclude la run senza aggiungere un risultato fittizio. I vecchi rivali vengono rimossi; quelli del prossimo evento entrano alla partenza. Le porzioni di strada lontane vengono scaricate normalmente.
+
+Massa, statistiche e hook dei potenziamenti si aggiornano sulla stessa auto. Una nuova partita ricrea invece il mondo e ripristina auto base, risorse, profili e risultati. La geometria locale, i seed degli eventi e le soglie Time Attack restano quelli di M5.2; cambia la disposizione consecutiva nel mondo (`world-connect-v1`). Vedi `M5_3_VALIDATION.md` per lo stato del collaudo.

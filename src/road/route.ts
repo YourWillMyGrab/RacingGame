@@ -58,7 +58,7 @@ export class ModularRoute implements DrivableRoute {
   }
   cursor(){return new RouteCursor(this);}
   pointAt(s: number,branch:Branch='left'): RoadPoint {
-    s=Math.max(0,Math.min(this.length,s));
+    s=Math.max(this.chunks[0].start,Math.min(this.length,s));
     const chunk=this.moduleAt(s),points=chunk.branches?.[branch]??chunk.points;
     let lo=0,hi=points.length-1;
     while(lo+1<hi) {const mid=(lo+hi)>>1;if(points[mid].s<=s)lo=mid;else hi=mid;}
@@ -79,7 +79,7 @@ export class ModularRoute implements DrivableRoute {
     }
     return {...best,distance:Math.sqrt(distance)};
   }
-  moduleAt(s: number) { return this.chunks.find(c=>s>=c.start && s<c.end) ?? this.chunks.at(-1)!; }
+  moduleAt(s: number) { return s<this.chunks[0].start?this.chunks[0]:this.chunks.find(c=>s>=c.start && s<c.end) ?? this.chunks.at(-1)!; }
   speedAt(s:number) {
     let speed=35;
     for(const c of this.chunks)if(c.end>=s&&c.start<s+120)speed=Math.min(speed,Math.sqrt(c.definition.recommendedSpeed**2+16*Math.max(0,c.start-s-8)));
@@ -88,14 +88,18 @@ export class ModularRoute implements DrivableRoute {
   brakingZone(s:number) {return this.chunks.find(c=>c.definition.difficulty===3&&c.end>s&&c.start<s+110);}
   validate(): string[] {
     const errors:string[]=[];
+    let frame=this.chunks[0].entry.yaw;
+    const forwardZ=(a:RoadPoint,b:RoadPoint)=>(b.z-a.z)*Math.cos(frame)+(b.x-a.x)*Math.sin(frame);
     for(let i=0;i<this.chunks.length;i++) {
       const c=this.chunks[i]; errors.push(...validateModule(c.definition).map(e=>`${c.index}:${e}`));
+      // Connected events retain their authored corridor in a rotated frame.
+      if(c.definition.category==='start')frame=c.entry.yaw;
       if(i && !validateConnection(this.chunks[i-1].exit,c.entry)) errors.push(`${i}:socket`);
       if(i && this.chunks[i-1].definition.id===c.definition.id)errors.push(`${i}:repetition`);
       if(c.branches){
         for(const arm of Object.values(c.branches)){
           for(const [p,socket] of [[arm[0],c.entry],[arm.at(-1)!,c.exit]] as const)if(Math.hypot(p.x-socket.x,p.z-socket.z)>.01||Math.abs(p.yaw-socket.yaw)>.001)errors.push(`${i}:fork socket`);
-          for(let j=1;j<arm.length;j++){const a=arm[j-1],b=arm[j];if(b.z>=a.z||Math.abs(b.yaw)>1||Math.abs(b.yaw-a.yaw)/Math.hypot(b.x-a.x,b.z-a.z)>.02)errors.push(`${i}:fork curvature`);}
+          for(let j=1;j<arm.length;j++){const a=arm[j-1],b=arm[j];if(forwardZ(a,b)>=0||Math.abs(b.yaw-frame)>1+1e-9||Math.abs(b.yaw-a.yaw)/Math.hypot(b.x-a.x,b.z-a.z)>.02)errors.push(`${i}:fork curvature`);}
         }
         const mid=Math.floor(c.branches.left.length/2);if(Math.hypot(c.branches.left[mid].x-c.branches.right[mid].x,c.branches.left[mid].z-c.branches.right[mid].z)<20)errors.push(`${i}:fork separation`);
       }
@@ -104,7 +108,7 @@ export class ModularRoute implements DrivableRoute {
         if(d<.1||Math.abs(b.y-a.y)/d>.09)errors.push(`${i}:grade`);
         // Heading envelope makes z strictly decreasing, with positive inner-edge z
         // derivative (curvature*halfWidth < 1), ruling out self-intersections.
-        if(b.z>=a.z || Math.abs(b.yaw)>1)errors.push(`${i}:non-monotonic road`);
+        if(forwardZ(a,b)>=0 || Math.abs(b.yaw-frame)>1+1e-9)errors.push(`${i}:non-monotonic road`);
       }
     }
     if(this.chunks.at(-1)?.definition.category!=='finish')errors.push('missing finish');
@@ -125,7 +129,7 @@ export class RouteCursor implements DrivableRoute {
     const p=this.road.nearest(x,z,hint,this.choices);
     if(p.forkIndex!==undefined&&p.branch){
       this.tentative.set(p.forkIndex,p.branch);
-      const c=this.road.chunks[p.forkIndex];
+      const c=this.road.chunks.find(c=>c.index===p.forkIndex)!;
       if(!this.choices.has(c.index)&&hint!==undefined&&Math.abs(p.s-hint)<=12&&p.s>=c.start+FORK_COMMIT_DISTANCE&&p.s<c.end-FORK_COMMIT_DISTANCE&&p.distance<p.width/2+.5)this.choices.set(c.index,p.branch);
     }
     return p;

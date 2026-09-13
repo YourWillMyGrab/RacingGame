@@ -39,7 +39,7 @@ export class Vehicle {
   private airTime = 0;
   private reverseArmed = false;
   private stopTime = 0;
-  constructor(private world: RAPIER.World, readonly route:DrivableRoute=labRoute, readonly settings=t) {
+  constructor(private world: RAPIER.World, public route:DrivableRoute=labRoute, readonly settings=t) {
     this.route=route.cursor?.()??route;
     const p=route.pointAt(route.start);
     this.lastAnchor=route.start;this.progress=route.start;
@@ -48,6 +48,11 @@ export class Vehicle {
     this.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.92,.28,1.95).setMass(settings.mass).setFriction(.05).setRestitution(.08).setCollisionGroups(0x00020003),this.body);
   }
   get yaw() { const q=this.body.rotation(); return Math.atan2(2*q.w*q.y,1-2*q.y*q.y); }
+  applySettings(settings:typeof t) {
+    Object.assign(this.settings,settings);
+    this.collider.setMass(settings.mass);
+    this.body.recomputeMassPropertiesFromColliders();
+  }
   step(input: Controls, dt: number) {
     const t=this.settings;
     this.power=1;this.surge=Math.max(0,this.surge-dt);

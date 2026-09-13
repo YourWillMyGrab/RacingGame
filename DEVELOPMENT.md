@@ -2,7 +2,7 @@
 
 ## Baseline corrente
 
-Il checkpoint di gameplay verificato è `b501508`: M5.1 e M5.2 sono completi e validati nel browser. Il prossimo task è M5.3, la continuità del mondo tra gli eventi. Le prove esatte sono in `BROWSER_VALIDATION.md`.
+M5.3 introduce la continuità del mondo tra gli eventi sul branch `codex/m5-3-world-continuity`. Lo stato e il checkpoint verificato sono in `PROJECT_STATE.md`; le prove correnti in `M5_3_VALIDATION.md`, quelle storiche di M5.2 in `BROWSER_VALIDATION.md`.
 
 Prima di iniziare un nuovo micro-milestone:
 
@@ -32,7 +32,7 @@ npm run test:run
 npm run test:menu
 ```
 
-I test browser richiedono Chrome e usano Playwright con tastiera e Gamepad API simulato. Il risultato non certifica un controller fisico né prestazioni costanti a 60 FPS su ogni macchina. Gli screenshot finiscono in `test-results/`, esclusa da Git.
+I test browser richiedono Chrome e usano Playwright con tastiera e Gamepad API simulato. Il risultato non certifica un controller fisico né prestazioni costanti a 60 FPS su ogni macchina. Gli screenshot finiscono in `test-results/`, esclusa da Git. Le campagne M5.3 usano sottocartelle separate per seed e variante normale/fuori tempo.
 
 Per una configurazione Chromium alternativa, `BROWSER_CONFIG` indica un file JSON di opzioni di avvio Playwright. Senza override viene usato Chrome headless. `RUN_SEED` cambia il seed della campagna di test. Per verificare anche la Time Attack oltre il Bronzo su PowerShell:
 
@@ -42,7 +42,9 @@ npm run test:run
 Remove-Item Env:TIME_ATTACK_OVERRUN
 ```
 
-Consultare `BROWSER_VALIDATION.md` per le prove del checkpoint. Non confondere un timeout su un host lento con una certificazione di prestazioni o con un difetto di gameplay: conservare risultati e configurazione dell'ambiente. Il workflow Pages esegue ancora solo test automatici e build; il gate browser resta locale.
+Per coprire anche la ripartenza con cinque rivali, imposta `$env:RUN_SEED='MIXED-1'` prima di `npm run test:run`, poi rimuovila con `Remove-Item Env:RUN_SEED`. Puoi combinarla con `TIME_ATTACK_OVERRUN` per verificare riduzione delle ricompense e finale Road Race nella stessa campagna.
+
+Consultare `M5_3_VALIDATION.md` per le prove del checkpoint. Non confondere un timeout su un host lento con una certificazione di prestazioni o con un difetto di gameplay: conservare risultati e configurazione dell'ambiente. Il workflow Pages esegue ancora solo test automatici e build; il gate browser resta locale.
 
 ## Hosting
 

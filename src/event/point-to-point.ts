@@ -22,17 +22,22 @@ export class PointToPoint {
   countdown=3;
   elapsed=0;
   started=false;
-  constructor(readonly route:ModularRoute,private world:RAPIER.World,player:Vehicle,participants:number) {
+  constructor(readonly route:ModularRoute,private world:RAPIER.World,player:Vehicle,participants:number,preservePlayer=false) {
     this.finish=route.chunks.at(-1)!.start+30;
     const rng=randomStream(route.seed,'rivals-v1');
     const names=['TU','MICA','SABLE','ECHO','ROOK','VANTA'],colors=[0xff704a,0x49dbc9,0xf4c95f,0x7da9ff,0xf2f1dd,0xb68cff];
     for(let i=0;i<participants;i++) {
       const vehicle=i?new Vehicle(world,route,{...DEFAULT_TUNING}):player;
       if(i&&vehicle.route instanceof RouteCursor)for(const c of route.chunks)if(c.branches)vehicle.route.plans.set(c.index,i%2?'right':'left');
-      const lane=i%2===0?-3:3,s=25+Math.floor(i/2)*8,p=route.pointAt(s);
-      vehicle.body.setTranslation({x:p.x+Math.cos(p.yaw)*lane,y:p.y+1,z:p.z-Math.sin(p.yaw)*lane},true);
-      vehicle.progress=s;vehicle.lastAnchor=s;
-      this.racers.push({id:i,name:names[i],color:colors[i],vehicle,preferredLane:lane,lane,pace:.70+rng()*.2,aggression:rng(),checkpoint:65,previous:s,finishTime:null,stuck:0,hold:0});
+      const lane=i%2===0?-3:3,s=route.start+Math.floor(i/2)*8+(preservePlayer&&i?12:0),p=route.pointAt(s);
+      if(i||!preservePlayer){
+        vehicle.body.setTranslation({x:p.x+Math.cos(p.yaw)*lane,y:p.y+1,z:p.z-Math.sin(p.yaw)*lane},true);
+        vehicle.body.setRotation({x:0,y:Math.sin(p.yaw/2),z:0,w:Math.cos(p.yaw/2)},true);
+        vehicle.progress=s;vehicle.lastAnchor=s;
+      }
+      vehicle.body.setLinvel({x:0,y:0,z:0},true);vehicle.body.setAngvel({x:0,y:0,z:0},true);
+      vehicle.speed=0;vehicle.collider.setCollisionGroups(0x00020003);
+      this.racers.push({id:i,name:names[i],color:colors[i],vehicle,preferredLane:lane,lane,pace:.70+rng()*.2,aggression:rng(),checkpoint:route.start+40,previous:vehicle.progress,finishTime:null,stuck:0,hold:0});
     }
   }
   get player() {return this.racers[0];}
@@ -74,10 +79,11 @@ export class PointToPoint {
     }
     this.elapsed+=dt;
     for(const r of this.racers) {
+      if(r.finishTime!==null)continue;
       r.hold=Math.max(0,r.hold-dt);
-      const controls=r.hold>0 || r.finishTime!==null?IDLE:r.id===0?playerControls:this.controls(r,dt);
+      const controls=r.hold>0?IDLE:r.id===0?playerControls:this.controls(r,dt);
       r.vehicle.step(controls,dt);
-      if(r.hold>0 || r.finishTime!==null)r.vehicle.body.setLinvel({x:0,y:r.vehicle.body.linvel().y,z:0},true);
+      if(r.hold>0)r.vehicle.body.setLinvel({x:0,y:r.vehicle.body.linvel().y,z:0},true);
     }
     this.world.step();
     const crossings:{r:Racer;time:number}[]=[];
@@ -92,7 +98,14 @@ export class PointToPoint {
       r.previous=progress;
     }
     crossings.sort((a,b)=>a.time-b.time||a.r.id-b.r.id);
-    for(const {r,time} of crossings){r.finishTime=time;r.vehicle.collider.setCollisionGroups(0x00020001);this.order.push({id:r.id,name:r.name,time});}
+    for(const {r,time} of crossings){
+      r.finishTime=time;r.vehicle.collider.setCollisionGroups(0x00020001);
+      r.vehicle.body.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased,true);
+      r.vehicle.body.setLinvel({x:0,y:0,z:0},true);r.vehicle.body.setAngvel({x:0,y:0,z:0},true);
+      r.vehicle.speed=0;r.vehicle.flowSource='none';r.vehicle.boosting=false;r.vehicle.drifting=false;
+      this.order.push({id:r.id,name:r.name,time});
+    }
   }
+  disposeRivals(){for(const r of this.racers.slice(1))this.world.removeRigidBody(r.vehicle.body);}
 }
 

@@ -9,8 +9,8 @@ export class TimeAttack extends PointToPoint {
   readonly kind='time-attack' as const;
   readonly targets;
   readonly awaitingRivals=false;
-  constructor(route:ModularRoute,world:RAPIER.World,player:Vehicle) {
-    super(route,world,player,1);
+  constructor(route:ModularRoute,world:RAPIER.World,player:Vehicle,preservePlayer=false) {
+    super(route,world,player,1,preservePlayer);
     this.targets=timeTargets(route);
   }
   get result() {return timedResult(this.player.finishTime??this.elapsed,this.targets);}
