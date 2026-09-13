@@ -1,5 +1,12 @@
 # Changelog
 
+## M5.2 browser gate completed locally — 2026-09-13
+
+- Pulled remote master while preserving the local documentation commit, resolved documentation conflicts and integrated the existing M5.2 implementation on `codex/m5-2-browser-validation` (gameplay baseline `b501508`).
+- All 37 automatic tests, build and 1,000-road / 1,000-campaign stress checks passed again.
+- All browser suites passed on default headless Chrome 153 on Windows, including the full normal and over-target mixed campaigns, both forks/recoveries, rewards, victory and clean reset. Inspected HUD, results, rewards and menu screenshots.
+- Recorded exact evidence in `BROWSER_VALIDATION.md` and aligned state, roadmap and development instructions. M5.2 is DONE locally; M5.3 is the next task. No gameplay/test changes, remote PR update or deployment were part of this validation.
+
 ## M5.2 implementation checkpoint — browser validation pending
 
 - Added seeded Time Attack, fixed route-aware targets, timed result tiers and existing run reward/resource integration.

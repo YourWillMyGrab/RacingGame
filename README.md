@@ -26,6 +26,7 @@ Apri l'indirizzo mostrato da Vite, normalmente http://127.0.0.1:5173.
 - `CURRENT_TASK.md`: task attivo, criteri di accettazione e verifiche ancora da completare.
 - `KNOWN_ISSUES.md`: limiti riproducibili e copertura non certificata.
 - `DEVELOPMENT.md`: workflow locale, browser playtest e skill consigliate.
+- `BROWSER_VALIDATION.md`: ambiente, risultati e prove browser di M5.2, inclusa la run fuori tempo.
 - `ASTRA_RACING_ROGUELIKE_MASTER.md`: specifica di prodotto e protocollo di recupero.
 
 ## Pubblicazione su GitHub Pages
@@ -112,8 +113,8 @@ La scelta avviene guidando, con cartelli a 100 e 30 metri dal bivio e un avviso 
 
 Il recupero conserva il ramo scelto. Una nuova partita cancella scelte, profili e potenziamenti. I codici sono ripetibili nella stessa versione e con le stesse scelte. Lo stress verifica 1.000 bivi e i test fisici attraversano entrambi i rami, controllano il vuoto centrale e la rimozione delle collisioni.
 
-## Time Attack M5.2 — implementata, collaudo browser da completare
+## Time Attack M5.2 — completata e verificata in locale
 
 La run propone Road Race → Time Attack → un evento scelto dal seed fra i due tipi. La cronometro ha tre obiettivi fissi, calcolati dalla strada/profilo e da uno stream del seed indipendente dagli upgrade. L’HUD mostra soglie e tempo residuo per la migliore fascia ancora raggiungibile. Oro dà le ricompense del primo posto, Argento quelle del terzo, Bronzo/fuori obiettivo quelle del sesto. Superare il tempo non termina la run: puoi ancora raggiungere il traguardo. A integrità zero la run termina. L’ultimo evento non dà un terzo upgrade o una riparazione finale.
 
-37 test automatici, build e stress su 1.000 percorsi più 1.000 run miste passano. Chrome 153 avvia la run senza errori di pagina; le prove browser lunghe sono però troppo lente in modalità headless software (la gara singola non supera 450 m entro 45 s). M5.2 resta IN_PROGRESS finché menu, HUD, risultati e run completa non vengono verificati. I test possono usare `BROWSER_CONFIG=/percorso/config.json`, un file JSON di opzioni Playwright, per esempio `{"executablePath":"/percorso/chromium","headless":true}`. Senza configurazione usano Chrome. `TIME_ATTACK_OVERRUN=1 npm run test:run` controlla anche l’arrivo oltre il Bronzo; `RUN_SEED` cambia il seed del test.
+37 test automatici, build e stress su 1.000 percorsi più 1.000 run miste passano. Il 2026-09-13 sono passate tutte le suite browser su Windows / Chrome 153: menu, input, giro nel laboratorio, streaming, gara singola e campagne miste normale/fuori tempo, fino a vittoria e reset. HUD, risultati e ricompense sono stati controllati nelle schermate. M5.2 è DONE in locale; il prossimo task è M5.3. Vedi `BROWSER_VALIDATION.md` per risultati e limiti, `DEVELOPMENT.md` per `BROWSER_CONFIG`, `RUN_SEED` e il comando PowerShell della variante fuori tempo.
