@@ -1,6 +1,6 @@
-import { chromium } from '@playwright/test';
+import {launchBrowser} from './browser.mjs';
 import assert from 'node:assert/strict';
-const browser=await chromium.launch({channel:'chrome',headless:true});
+const browser=await launchBrowser();
 try {
 const page=await browser.newPage({viewport:{width:1280,height:800}});
 await page.goto('http://127.0.0.1:5173/?lab=1');await page.click('#start');

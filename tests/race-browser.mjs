@@ -1,8 +1,8 @@
-import { chromium } from '@playwright/test';
+import {launchBrowser} from './browser.mjs';
 import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
 await mkdir('test-results',{recursive:true});
-const browser=await chromium.launch({channel:'chrome',headless:true});
+const browser=await launchBrowser();
 try {
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:5173/?race=1&seed=7F2C-A91D');await page.click('#start');

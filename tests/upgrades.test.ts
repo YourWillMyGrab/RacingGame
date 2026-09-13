@@ -1,3 +1,4 @@
+import {timedResult} from '../src/event/rules.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -11,12 +12,12 @@ await RAPIER.init();
 test('rewards are deterministic, unique, never empty in a legal run; low places obey rarity limits',()=>{
  for(let i=0;i<100;i++)for(let place=1;place<=6;place++){
   const run=new Run(`REWARD-${i}`);
-  for(let e=0;e<2;e++){run.finish(place,60,90,20);assert.equal(run.offers.length,3);assert.equal(new Set(run.offers.map(u=>u.id)).size,3);assert.deepEqual(run.offers,rewardChoices(run.seed,e,place,run.owned));if(place>3)assert.ok(run.offers.every(u=>['Common','Uncommon'].includes(u.rarity)));run.choose(run.offers[0].id);}
-  run.finish(place,60,90,20);assert.equal(run.phase,'complete');assert.equal(run.owned.length,2);
+  for(let e=0;e<2;e++){settle(run,place,60,90,20);assert.equal(run.offers.length,3);assert.equal(new Set(run.offers.map(u=>u.id)).size,3);assert.deepEqual(run.offers,rewardChoices(run.seed,e,run.results.at(-1)!.position,run.owned));if(place>3)assert.ok(run.offers.every(u=>['Common','Uncommon'].includes(u.rarity)));run.choose(run.offers[0].id);}
+  settle(run,place,60,90,20);assert.equal(run.phase,'complete');assert.equal(run.owned.length,2);
  }
  for(const u of UPGRADES.filter(u=>u.rarity==='Cursed'))assert.ok(u.downside);
 });
-test('run reset clears temporary choices, resources and event history',()=>{const run=new Run('RESET');run.finish(1,60,70,5);assert.throws(()=>run.choose('not-offered'));run.choose(run.offers[0].id);assert.equal(run.event,1);run.reset();assert.equal(run.event,0);assert.deepEqual(run.owned,[]);assert.deepEqual(run.results,[]);assert.equal(run.integrity,100);assert.equal(run.flow,25);assert.equal(run.elapsed,0);assert.equal(run.phase,'race');});
+test('run reset clears temporary choices, resources and event history',()=>{const run=new Run('RESET');settle(run,1,60,70,5);assert.throws(()=>run.choose('not-offered'));run.choose(run.offers[0].id);assert.equal(run.event,1);run.reset();assert.equal(run.event,0);assert.deepEqual(run.owned,[]);assert.deepEqual(run.results,[]);assert.equal(run.integrity,100);assert.equal(run.flow,25);assert.equal(run.elapsed,0);assert.equal(run.phase,'race');});
 test('event hooks remove safely during dispatch and repeated unsubscription preserves replacement listeners',()=>{
  const bus=new EventBus<{tick:number}>();let hits=0;let removeB=()=>{};
  bus.on('tick',()=>{hits++;removeB();});removeB=bus.on('tick',()=>{hits+=100;});bus.emit('tick',1);assert.equal(hits,1);
@@ -35,5 +36,11 @@ test('drift/Flow, heavy impact and low-integrity power builds produce different 
 });
 
 test('wrecked run gives no reward and resets to the same base; long seeds still have distinct event roads',()=>{
- const run=new Run('ABCDEFGHIJKLMNOPQRSTUVWX');const first=run.routeSeed;run.finish(1,10,80,20);run.choose(run.offers[0].id);assert.notEqual(run.routeSeed,first);run.finish(6,20,0,0);assert.equal(run.phase,'failed');assert.deepEqual(run.offers,[]);assert.throws(()=>run.choose('armor'));run.reset();assert.equal(run.routeSeed,first);assert.equal(run.integrity,100);assert.deepEqual(run.owned,[]);
+ const run=new Run('ABCDEFGHIJKLMNOPQRSTUVWX');const first=run.routeSeed;settle(run,1,10,80,20);run.choose(run.offers[0].id);assert.notEqual(run.routeSeed,first);settle(run,6,20,0,0);assert.equal(run.phase,'failed');assert.deepEqual(run.offers,[]);assert.throws(()=>run.choose('armor'));run.reset();assert.equal(run.routeSeed,first);assert.equal(run.integrity,100);assert.deepEqual(run.owned,[]);
 });
+
+// Exercise the same reward tiers with a valid result for each scheduled mode.
+function settle(run:Run,position:number,time:number,integrity:number,flow:number) {
+ const targets=position===1?{gold:time,silver:time*1.16,bronze:time*1.35}:position<=3?{gold:time*.8,silver:time,bronze:time*1.35}:{gold:time*.7,silver:time*.85,bronze:time};
+ run.finish(run.eventType==='road-race'?{kind:'road-race',position,time}:timedResult(time,targets),integrity,flow);
+}

@@ -1,3 +1,4 @@
+import { eventSchedule, timedResult, type EventResult } from './event/rules';
 import { normalizeSeed, randomStream } from './road/seed';
 import { rewardChoices, type Upgrade } from './upgrades';
 import {BRANCH_PROFILE,type Branch,type RouteProfile} from './road/fork';
@@ -11,7 +12,9 @@ export class Run {
   elapsed=0;
   phase:'race'|'reward'|'complete'|'failed'='race';
   offers:Upgrade[]=[];
-  results:{position:number;time:number}[]=[];
+  results:EventResult[]=[];
+  get eventTypes(){return eventSchedule(this.seed);}
+  get eventType(){return this.eventTypes[this.event];}
   profile:RouteProfile='balanced';
   nextProfile:RouteProfile='balanced';
   routeChoices:{event:number;branch:Branch;profile:RouteProfile}[]=[];
@@ -24,10 +27,17 @@ export class Run {
     if(branch!=='left'&&branch!=='right')throw new Error('Invalid route choice');
     this.nextProfile=BRANCH_PROFILE[branch];this.routeChoices.push({event:this.event,branch,profile:this.nextProfile});return true;
   }
-  finish(position:number,time:number,integrity:number,flow:number) {
+  finish(result:EventResult,integrity:number,flow:number) {
+    if(result.kind!==this.eventType)throw new Error('Wrong event kind');
+    if(result.kind==='time-attack') {
+      const expected=timedResult(result.time,result.targets);
+      if(expected.band!==result.band||expected.position!==result.position)throw new Error('Invalid Time Attack result');
+    }
+    const {position,time}=result;
     if(this.phase!=='race')throw new Error('Event already resolved');
+    if(!Number.isFinite(integrity)||!Number.isFinite(flow))throw new Error('Invalid event resources');
     if(!Number.isInteger(position)||position<1||position>6||!Number.isFinite(time)||time<0)throw new Error('Invalid race result');
-    this.elapsed+=time;this.results.push({position,time});this.integrity=Math.max(0,integrity);this.flow=flow;
+    this.elapsed+=time;this.results.push(structuredClone(result));this.integrity=Math.max(0,integrity);this.flow=flow;
     if(this.integrity<=0){this.phase='failed';return;}
     if(this.event===this.totalEvents-1){this.phase='complete';return;}
     this.integrity=Math.min(100,Math.max(1,this.integrity+(position<=3?8:-8)));

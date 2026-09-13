@@ -34,7 +34,7 @@ for(const branch of ['left','right'] as const)test(`physical ${branch} arm compl
 });
 test('route choice changes the next seeded event once; reset clears history and profiles',()=>{
  const a=new Run('CHOICE'),b=new Run('CHOICE');assert.ok(a.selectRoute('left'));assert.equal(a.selectRoute('right'),false);assert.ok(b.selectRoute('right'));
- for(const run of [a,b]){run.finish(1,90,100,60);run.choose(run.offers[0].id);}
+ for(const run of [a,b]){run.finish({kind:'road-race',position:1,time:90},100,60);run.choose(run.offers[0].id);}
  assert.equal(a.profile,'technical');assert.equal(b.profile,'speed');assert.notEqual(a.routeSeed,b.routeSeed);
  const technical=new ModularRoute(a.routeSeed,a.moduleCount,a.routeOptions),speed=new ModularRoute(b.routeSeed,b.moduleCount,b.routeOptions);
  assert.ok(technical.chunks.some(c=>c.definition.id==='harbor-switchbacks'));assert.ok(speed.chunks.some(c=>c.definition.id==='coastal-express'));assert.equal(a.routeChoices.length,1);

@@ -1,5 +1,14 @@
 # Changelog
 
+## M5.2 implementation checkpoint — browser validation pending
+
+- Added seeded Time Attack, fixed route-aware targets, timed result tiers and existing run reward/resource integration.
+- Separated shared point-to-point simulation from event rules/factory/Italian HUD and results.
+- Added seven automatic tests and mixed-campaign deterministic stress; 37 tests and build pass. Updated browser run coverage. Current Chrome boot smoke passes; long browser regressions remain incomplete under headless software rendering.
+- Added configurable browser launcher and direct Node/tsx test scripts to avoid the tsx CLI IPC requirement.
+- M5.2 not marked DONE; M5.3 remains TODO. See CURRENT_TASK.md for recovery and browser gate.
+
+
 ## 2026-09-10
 
 - Created the repository documentation and interruption-safe project state baseline.
