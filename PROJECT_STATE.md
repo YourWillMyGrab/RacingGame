@@ -4,7 +4,7 @@
 - Previous validated baseline: `6459ea6` (M5.2 validation checkpoint on top of gameplay integration `b501508`).
 - Active branch: `codex/m5-3-world-continuity`; task scope checkpoint `801d50b`.
 - Remote update: fetched origin; origin/master (`bd80225`) is already merged into the baseline. No remote push or Pages deployment in this task.
-- Current task: M5.3 DONE. Validated implementation checkpoint: PENDING_COMMIT.
+- Current task: M5.3 DONE. Validated implementation checkpoint: `d0941c9`.
 - Next task: scope the first M6 micro-milestone (first dressed biome). No M6 work is included.
 
 ## Implemented

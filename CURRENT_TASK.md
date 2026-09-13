@@ -5,7 +5,7 @@
 - Status: DONE — 2026-09-13, locally validated.
 - Baseline: `6459ea6`; scope checkpoint `801d50b`. Fetched origin and merged origin/master (already included).
 - Branch: `codex/m5-3-world-continuity`.
-- Validated implementation checkpoint: PENDING_COMMIT.
+- Validated implementation checkpoint: `d0941c9`.
 
 ## Acceptance evidence
 

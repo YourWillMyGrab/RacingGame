@@ -2,7 +2,7 @@
 
 ## Scope and environment
 
-M5.3 world continuity on `codex/m5-3-world-continuity`, starting from `6459ea6`. Validated implementation checkpoint: PENDING_COMMIT. `git fetch origin` succeeded; `git merge origin/master` reported already up to date (`bd80225` is included in the local baseline). Task scope checkpoint: `801d50b`. Remote branches and Pages are unchanged.
+M5.3 world continuity on `codex/m5-3-world-continuity`, starting from `6459ea6`. Validated implementation checkpoint: `d0941c9`. `git fetch origin` succeeded; `git merge origin/master` reported already up to date (`bd80225` is included in the local baseline). Task scope checkpoint: `801d50b`. Remote branches and Pages are unchanged.
 
 Windows, Node.js 24.11.1, npm 11.6.2 and system Chrome 153.0.8010.36, default headless options; no launch override or increased browser timeout. Vite serves `127.0.0.1:5173`. Tests operate keyboard and simulated standard Gamepad API, advancing the browser clock while real rendering and Rapier physics continue. They do not teleport the campaign to finishes or inject results.
 
