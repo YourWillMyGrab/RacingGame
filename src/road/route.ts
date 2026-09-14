@@ -1,6 +1,7 @@
 import { MODULES, FORK_MODULE, SPEED_RELEASE, validateModule, validateConnection, type RoadModule, type Socket } from './modules';
 import { normalizeSeed, randomStream } from './seed';
 import {forkPoints,FORK_COMMIT_DISTANCE,type Branch,type RouteProfile} from './fork';
+import {coastWind,windAcceleration,type WindZone} from '../biome';
 export type {Socket} from './modules';
 
 export interface RoadPoint { x: number; y: number; z: number; yaw: number; s: number; width: number; branch?:Branch; forkIndex?:number }
@@ -11,8 +12,9 @@ export interface DrivableRoute {
   pointAt(s: number): RoadPoint;
   nearest(x: number,z: number,hint?: number): RoadAnchor;
   cursor?():RouteCursor;
+  windAt?(s:number):number;
 }
-export interface PlacedModule { definition: RoadModule; index: number; start: number; end: number; entry: Socket; exit: Socket; points: RoadPoint[]; branches?:Record<Branch,RoadPoint[]> }
+export interface PlacedModule { definition: RoadModule; index: number; start: number; end: number; entry: Socket; exit: Socket; points: RoadPoint[]; branches?:Record<Branch,RoadPoint[]>; wind?:WindZone }
 export interface RouteOptions {forks?:boolean;profile?:RouteProfile}
 
 export class ModularRoute implements DrivableRoute {
@@ -51,13 +53,15 @@ export class ModularRoute implements DrivableRoute {
       if(branches){for(const arm of Object.values(branches))for(const p of arm)p.forkIndex=i;points.splice(0,points.length,...branches.left);}
       const last=points.at(-1)!;
       const exit={x:last.x,y:last.y,z:last.z,yaw:last.yaw,grade:0,width:m.width};
-      this.chunks.push({definition:m,index:i,start,end:start+m.length,entry:{...socket},exit,points,branches});
+      this.chunks.push({definition:m,index:i,start,end:start+m.length,entry:{...socket},exit,points,branches,wind:coastWind(this.seed,i,m)});
       this.points.push(...(i?points.slice(1):points));
       this.length+=m.length; socket=exit;
     }
     const issues=this.validate(); if(issues.length) throw new Error(issues.join(', '));
   }
   cursor(){return new RouteCursor(this);}
+  windAt(s:number){const c=this.moduleAt(s);return windAcceleration(c.wind,s-c.start);}
+  windZone(s:number){return this.chunks.find(c=>c.wind&&s>=c.start+c.wind.from-70&&s<c.start+c.wind.to);}
   pointAt(s: number,branch:Branch='left'): RoadPoint {
     s=Math.max(this.chunks[0].start,Math.min(this.length,s));
     const chunk=this.moduleAt(s),points=chunk.branches?.[branch]??chunk.points;
@@ -125,6 +129,7 @@ export class RouteCursor implements DrivableRoute {
   constructor(readonly road:ModularRoute){}
   get length(){return this.road.length;}
   get start(){return this.road.start;}
+  windAt(s:number){return this.road.windAt(s);}
   pointAt(s:number){const c=this.road.moduleAt(s);return this.road.pointAt(s,this.choices.get(c.index)??this.plans.get(c.index)??this.tentative.get(c.index)??'left');}
   nearest(x:number,z:number,hint?:number){
     const p=this.road.nearest(x,z,hint,this.choices);

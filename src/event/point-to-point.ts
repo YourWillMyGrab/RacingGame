@@ -4,9 +4,10 @@ import { randomStream } from '../road/seed';
 import { Vehicle } from '../vehicle';
 import type { Controls } from '../input';
 import { DEFAULT_TUNING } from '../config';
+import {FaroTactics} from '../special-rival';
 
 export const IDLE:Controls={throttle:0,brake:0,steer:0,handbrake:false,boost:false};
-export interface Racer { id:number; name:string; color:number; vehicle:Vehicle; preferredLane:number; lane:number; pace:number; aggression:number; checkpoint:number; previous:number; finishTime:number|null; stuck:number; hold:number }
+export interface Racer { id:number; name:string; color:number; vehicle:Vehicle; preferredLane:number; lane:number; pace:number; aggression:number; checkpoint:number; previous:number; finishTime:number|null; stuck:number; hold:number; special?:FaroTactics }
 export interface Finish { id:number; name:string; time:number }
 
 /** Ordered gates prevent a jump in nearest-road progress from becoming a finish. */
@@ -39,7 +40,7 @@ export class PointToPoint {
       vehicle.body.setLinvel({x:0,y:0,z:0},true);vehicle.body.setAngvel({x:0,y:0,z:0},true);
       vehicle.speed=0;vehicle.collider.setCollisionGroups(0x00020003);
       vehicle.renderPose.reset({...vehicle.body.translation(),yaw:vehicle.yaw});
-      this.racers.push({id:i,name:names[i],color:colors[i],vehicle,preferredLane:lane,lane,pace:.70+rng()*.2,aggression:rng(),checkpoint:route.start+40,previous:vehicle.progress,finishTime:null,stuck:0,hold:0});
+      this.racers.push({id:i,name:i===5?'FARO':names[i],color:i===5?0xffae48:colors[i],vehicle,preferredLane:lane,lane,pace:.70+rng()*.2,aggression:rng(),checkpoint:route.start+40,previous:vehicle.progress,finishTime:null,stuck:0,hold:0,...(i===5?{special:new FaroTactics()}: {})});
     }
   }
   get player() {return this.racers[0];}
@@ -60,6 +61,9 @@ export class PointToPoint {
     const ahead=this.racers.find(other=>other!==r && other.finishTime===null && other.vehicle.progress>car.progress && other.vehicle.progress-car.progress<20 && Math.hypot(other.vehicle.body.translation().x-p.x,other.vehicle.body.translation().z-p.z)<22);
     if(ahead)lane=ahead.lane>=0?-4.5:4.5;
     const module=this.route.moduleAt(car.progress+25),technical=module.definition.difficulty===3;
+    const clear=!ahead&&!module.branches&&!this.route.windZone(car.progress)&&this.route.speedAt(car.progress+80)>30&&Math.abs(car.slip)<.08&&car.flow>12;
+    const phase=r.special?.step(clear,dt);
+    if(r.special&&technical)lane=0;
     if(technical)lane*=.5;
     if(module.branches)lane=0;
     r.lane+=(lane-r.lane)*Math.min(1,dt*1.5);
@@ -67,10 +71,10 @@ export class PointToPoint {
     const tx=target.x+Math.cos(target.yaw)*r.lane,tz=target.z-Math.sin(target.yaw)*r.lane;
     const desired=Math.atan2(-(tx-p.x),-(tz-p.z));
     const error=Math.atan2(Math.sin(desired-car.yaw),Math.cos(desired-car.yaw));
-    const targetSpeed=this.route.speedAt(car.progress)*(.88+r.aggression*.08);
+    const targetSpeed=this.route.speedAt(car.progress)*(r.special?(phase==='attack'?1.04:.86):(.88+r.aggression*.08));
     if(car.speed<1.5 && this.elapsed>5)r.stuck+=dt;else r.stuck=0;
     if(r.stuck>4)this.recover(r.id);
-    return {throttle:car.speed>targetSpeed?0:r.pace,brake:car.speed>targetSpeed+.8?.65:0,steer:Math.max(-1,Math.min(1,error*3)),handbrake:false,boost:this.route.speedAt(car.progress+80)>30&&Math.abs(error)<.04&&car.speed<targetSpeed-2&&car.flow>35&&!ahead&&r.aggression>.65};
+    return {throttle:car.speed>targetSpeed?0:r.special?(phase==='attack'?1:.78):r.pace,brake:car.speed>targetSpeed+.8?.65:0,steer:Math.max(-1,Math.min(1,error*3)),handbrake:false,boost:r.special?phase==='attack'&&Math.abs(error)<.06&&car.speed<targetSpeed: this.route.speedAt(car.progress+80)>30&&Math.abs(error)<.04&&car.speed<targetSpeed-2&&car.flow>35&&!ahead&&r.aggression>.65};
   }
   step(playerControls:Controls,dt:number) {
     if(!this.started) {

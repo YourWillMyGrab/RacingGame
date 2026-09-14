@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-export function createCar(color=0xff704a) {
+export function createCar(color=0xff704a,special=false) {
   const root=new THREE.Group(), body=new THREE.Group(); root.add(body);
   const paint=new THREE.MeshStandardMaterial({color,metalness:.48,roughness:.28});
   const dark=new THREE.MeshStandardMaterial({color:0x08171d,metalness:.35,roughness:.35});
@@ -10,6 +10,7 @@ export function createCar(color=0xff704a) {
   box(1.8,.13,.15,0,.45,1.7,dark);box(1.8,.16,.24,0,-.13,-1.99,dark);
   box(.18,.025,3.9,-.24,.22,0,dark);box(.18,.025,3.9,.24,.22,0,dark);
   const tail=new THREE.MeshBasicMaterial({color:0xff2344}), light=new THREE.MeshBasicMaterial({color:0xc0f9ff});
+  if(special){box(1.9,.12,.55,0,.8,1.6,dark);body.userData.beacon=box(.8,.16,.25,0,.92,.3,new THREE.MeshBasicMaterial({color:0xffe5ae}));box(.65,.025,1.3,0,.395,-1.12,light);}
   for(const x of [-.61,.61]) {box(.47,.1,.04,x,.07,-2,light);box(.5,.09,.04,x,.1,2,tail);}
   const wheels:THREE.Mesh[]=[];
   for(const x of [-.94,.94]) for(const z of [-1.3,1.3]) {

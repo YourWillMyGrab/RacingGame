@@ -1,6 +1,6 @@
 # Roadmap
 
-Last reviewed: 2026-09-13. M5.1, M5.2 and M5.3 are validated locally; M5 is complete. Next milestone: M6.
+Last reviewed: 2026-09-14. M5 is complete. M6 is active; M6.1 Costa del Faro is implemented and validated locally.
 
 Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 
@@ -12,7 +12,7 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 | 3 | One complete race | DONE |
 | 4 | Roguelike slice | DONE |
 | 5 | Physical forks, route choices, two event types and seamless world loop | DONE |
-| 6 | First dressed biome, boss, hazards and audio/VFX | TODO |
+| 6 | First dressed biome, boss/special rival, hazards and audio/VFX | IN_PROGRESS |
 | 7 | Full three-biome 20–30 minute run | TODO |
 | 8 | Expanded upgrades, chaos, event types and balance | TODO |
 | 9 | Final polish, settings, accessibility and performance | TODO |
@@ -38,5 +38,6 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 | M5.2 | Seeded Time Attack; automatic/build/stress and full normal/over-target browser gates passed | DONE |
 | M5.3 | Continuous event/world lifecycle across rewards and event boundaries | DONE |
 | Driving refinement | Smooth presentation/input, planted grip, complex asymmetric roads, rolling Time Attack | DONE |
+| M6.1 | Costa del Faro: dressed scenery, seeded physical wind, FARO tactics, audio/VFX and continuity regression gates | DONE |
 
-M4 is intentionally a short coastal slice. M5.1, M5.2 and M5.3 are complete. M6 has not been started. No procedural approval is pending: the user accepted the first prototype and authorized continued development.
+M4 is intentionally a short coastal slice. M5.1, M5.2 and M5.3 are complete. M6.1 starts the first biome; future M6 work covers authored encounter variety and human balance/art/audio acceptance. No procedural approval is pending: the user accepted the first prototype and authorized continued development.

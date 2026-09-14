@@ -29,6 +29,7 @@ export class Vehicle {
   steer = 0;
   driftTime = 0;
   impact = 0;
+  wind = 0;
   recoveries = 0;
   penalty = 0;
   lastAnchor = 25;
@@ -75,6 +76,12 @@ export class Vehicle {
       if(hit) { this.contacts++; springForce+=clamp((t.springLength-hit.timeOfImpact)*t.spring-v.y*t.damper,0,18000); }
     }
     this.grounded=this.contacts>=2;
+    // Wind is a real force in the fixed-step simulation, shared by every car.
+    // Sample physical road position, not a stale checkpoint/recovery station.
+    const exposure=this.route.nearest(p.x,p.z,this.progress);
+    this.wind=this.grounded&&exposure.distance<exposure.width/2&&Math.abs(p.y-exposure.y)<2?(this.route.windAt?.(exposure.s)??0):0;
+    const roadYaw=exposure.yaw;
+    this.body.addForce({x:Math.cos(roadYaw)*this.wind*t.mass,y:0,z:-Math.sin(roadYaw)*this.wind*t.mass},true);
     this.body.addForce({x:0,y:springForce-(this.grounded?this.speed*this.speed*t.downforce:0),z:0},true);
     this.steer+=(input.steer-this.steer)*(1-Math.exp(-t.steerResponse*dt));
     const canDrive=this.integrity>0;
@@ -126,7 +133,7 @@ export class Vehicle {
     this.cooldown=Math.max(0,this.cooldown-dt); this.impact*=Math.exp(-dt*5);
     // Progress follows the road corridor in the air too; only safe recovery
     // anchors require wheel contact. Otherwise a crest could skip a race gate.
-    const anchor=this.route.nearest(p.x,p.z,this.progress);
+    const anchor=exposure;
     if(anchor.distance<anchor.width/2+.5)this.progress=anchor.s;
     if(this.grounded) {
       if(this.airTime>.3)this.events.emit('landing',{car:this,dt,amount:this.airTime,input});
@@ -165,7 +172,7 @@ export class Vehicle {
     this.body.setLinvel({x:0,y:0,z:0},true); this.body.setAngvel({x:0,y:0,z:0},true);
     this.body.resetForces(true); this.body.resetTorques(true);
     this.speed=0; this.previousSpeed=0; this.steer=0; this.slip=0; this.driftTime=0; this.driftAssist=0; this.airTime=0;this.cooldown=1;
-    this.boosting=false;this.drifting=false; this.penalty+=t.recoveryPenalty; this.recoveries++;
+    this.boosting=false;this.drifting=false;this.wind=0; this.penalty+=t.recoveryPenalty; this.recoveries++;
     this.progress=p.s;this.lastAnchor=p.s;
     this.renderPose.reset({...this.body.translation(),yaw:this.yaw});
   }

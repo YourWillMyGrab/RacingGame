@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { ModularRoute, type PlacedModule } from './route';
+import {COAST} from '../biome';
 
 interface ChunkResources { group: THREE.Group; colliders: RAPIER.Collider[]; geometry: THREE.BufferGeometry[]; debug: THREE.Group; materials?:THREE.Material[]; textures?:THREE.Texture[] }
 export class RoadStream {
@@ -8,10 +9,13 @@ export class RoadStream {
   debug=false;
   created=0;
   unloaded=0;
-  private road=new THREE.MeshStandardMaterial({color:0x2d3c46,roughness:.8});
-  private wall=new THREE.MeshStandardMaterial({color:0x24bfae,emissive:0x073f42});
-  private white=new THREE.MeshStandardMaterial({color:0xb8d2d5});
-  private structure=new THREE.MeshStandardMaterial({color:0x244550,roughness:.75});
+  private road=new THREE.MeshStandardMaterial({color:COAST.road,roughness:.8});
+  private wall=new THREE.MeshStandardMaterial({color:COAST.wall});
+  private white=new THREE.MeshStandardMaterial({color:COAST.white});
+  private structure=new THREE.MeshStandardMaterial({color:COAST.rock,roughness:.95});
+  private accent=new THREE.MeshStandardMaterial({color:COAST.accent,emissive:0x552a09});
+  private beacon=new THREE.MeshBasicMaterial({color:0xffedb2});
+  private windSigns=new Map<number,{texture:THREE.CanvasTexture;material:THREE.MeshBasicMaterial}>();
   private debugMat=new THREE.MeshBasicMaterial({color:0xffd27a,wireframe:true});
   private signTexture?:THREE.CanvasTexture;
   private signMaterial?:THREE.MeshBasicMaterial;
@@ -35,7 +39,7 @@ export class RoadStream {
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geo.setIndex(indices);geo.computeVertexNormals();geometry.push(geo);
     group.add(new THREE.Mesh(geo,this.road));
     colliders.push(this.world.createCollider(RAPIER.ColliderDesc.trimesh(new Float32Array(vertices),new Uint32Array(indices)).setFriction(.1)));
-    const count=chunk.points.length-1,box=new THREE.BoxGeometry(1,1,1);geometry.push(box);
+    const count=chunk.points.length-1,box=new THREE.BoxGeometry(1,1,1),rock=new THREE.IcosahedronGeometry(.65,0),tower=new THREE.CylinderGeometry(.48,.5,1,12),roof=new THREE.ConeGeometry(.6,1,12);geometry.push(box,rock,tower,roof);
     const barriers=new THREE.InstancedMesh(box,this.wall,count*2),stripes=new THREE.InstancedMesh(box,this.white,Math.ceil(count/3));
     const dummy=new THREE.Object3D();
     let stripeIndex=0;
@@ -51,8 +55,8 @@ export class RoadStream {
     }
     group.add(barriers,stripes);
     const decorations=new THREE.Group();group.add(decorations);
-    const addBox=(w:number,h:number,d:number,s:number,offset:number,y:number,material:THREE.Material=this.structure,physical=false)=>{
-      const p=this.route.pointAt(s),mesh=new THREE.Mesh(box,material);
+    const addBox=(w:number,h:number,d:number,s:number,offset:number,y:number,material:THREE.Material=this.structure,physical=false,shape:THREE.BufferGeometry=box)=>{
+      const p=this.route.pointAt(s),mesh=new THREE.Mesh(shape,material);
       mesh.scale.set(w,h,d);mesh.position.set(p.x+Math.cos(p.yaw)*offset,p.y+y,p.z-Math.sin(p.yaw)*offset);mesh.rotation.y=p.yaw;decorations.add(mesh);
       if(physical)colliders.push(this.world.createCollider(RAPIER.ColliderDesc.cuboid(w/2,h/2,d/2).setTranslation(mesh.position.x,mesh.position.y,mesh.position.z).setRotation(mesh.quaternion)));
     };
@@ -62,7 +66,37 @@ export class RoadStream {
       for(let s=chunk.start+12;s<chunk.end;s+=30)for(const side of [-1,1]){addBox(.25,7,.25,s,side*11.8,3.5);addBox(1.8,.15,.35,s,side*11.2,7,this.white);}
     }
     if(chunk.definition.flags.bridge)for(let s=chunk.start+8;s<chunk.end;s+=18)for(const side of [-1,1])addBox(.4,5,.4,s,side*10.8,2.5,this.white);
-    for(const s of chunk.definition.scenerySockets)for(const side of [-1,1])addBox(14,15+(chunk.index%5)*7,18,chunk.start+s,side*50,6+(chunk.index%5)*3.5);
+    // Stratified coastal rocks, salt-white huts and orange harbour hardware.
+    // All scenery is outside the carriageway and joins the existing instance batches.
+    for(const s of chunk.definition.scenerySockets)for(const side of [-1,1]){
+      addBox(28,20,32,chunk.start+s,side*37,-5,this.structure,false,rock);
+      addBox(20,9,24,chunk.start+s,side*39,1,this.wall,false,rock);
+      if(side===-1){addBox(7,4,8,chunk.start+s,-38,8,this.white);addBox(8,.5,9,chunk.start+s,-38,10.2,this.accent);addBox(2,1.4,.1,chunk.start+s-4.1,-38,8.5,this.road);}
+    }
+    if(chunk.definition.category==='start'||chunk.definition.flags.bridge){
+      const s=chunk.start+55;
+      addBox(30,15,34,s,43,-4,this.structure,false,rock);addBox(8,2,8,s,43,3,this.white,false,tower);
+      for(let tier=0;tier<6;tier++)addBox(5-tier*.2,2.5,5-tier*.2,s,43,5+tier*2.5,tier%2?this.accent:this.white,false,tower);
+      addBox(6,.5,6,s,43,19,this.road,false,tower);addBox(3,2.5,3,s,43,20.5,this.beacon,false,tower);addBox(5,2,5,s,43,22.5,this.accent,false,roof);
+    }
+    if(chunk.wind){
+      const wind=chunk.wind;
+      for(let s=chunk.start+wind.from;s<=chunk.start+wind.to;s+=8)for(const side of [-1,1]){
+        addBox(.65,1.05,2,s,side*10.3,.55,this.accent);
+        addBox(.6,.035,3,s,side*9,.04,this.accent);
+      }
+      for(const distance of [70,25])for(const side of [-1,1]){
+        const s=chunk.start+wind.from-distance;
+        addBox(.16,4.5,.16,s,side*11.5,2.25,this.white);
+        // A fixed tapered windsock encodes the same force direction as physics.
+        for(let i=0;i<4;i++)addBox(.5,.7-i*.12,.7-i*.12,s,side*11.5+wind.direction*(.3+i*.5),4.5,i%2?this.white:this.accent);
+        if(typeof document!=='undefined'){
+          let sign=this.windSigns.get(wind.direction);
+          if(!sign){const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#f4be70';ctx.fillRect(0,0,512,256);ctx.fillStyle='#263a40';ctx.textAlign='center';ctx.font='bold 48px sans-serif';ctx.fillText('RAFFICHE',256,62);ctx.font='bold 110px sans-serif';ctx.fillText(wind.direction>0?'→':'←',256,165);ctx.font='bold 25px sans-serif';ctx.fillText('CONTRASTERZA',256,225);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;sign={texture,material:new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide})};this.windSigns.set(wind.direction,sign);}
+          const geo=new THREE.PlaneGeometry(3.6,1.8);geometry.push(geo);const mesh=new THREE.Mesh(geo,sign.material),p=this.route.pointAt(s);mesh.position.set(p.x+Math.cos(p.yaw)*side*11.5,p.y+3,p.z-Math.sin(p.yaw)*side*11.5);mesh.rotation.y=p.yaw;group.add(mesh);
+        }
+      }
+    }
     if(chunk.definition.difficulty===3&&typeof document!=='undefined') {
       if(!this.signMaterial){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#ffb65c';ctx.fillRect(0,0,256,256);ctx.fillStyle='#172c35';ctx.textAlign='center';ctx.font='bold 38px sans-serif';ctx.fillText('FRENA',128,53);ctx.font='bold 105px sans-serif';ctx.fillText('50',128,159);ctx.font='24px sans-serif';ctx.fillText('CURVE STRETTE',128,215);this.signTexture=new THREE.CanvasTexture(canvas);this.signTexture.colorSpace=THREE.SRGBColorSpace;this.signMaterial=new THREE.MeshBasicMaterial({map:this.signTexture,side:THREE.DoubleSide});}
       const signGeo=new THREE.PlaneGeometry(2.4,2.4);geometry.push(signGeo);
@@ -79,10 +113,10 @@ export class RoadStream {
     }
     // Static scenery shares geometry/materials: batch it instead of issuing a
     // separate draw call for every lamp, tunnel beam and building.
-    const batches=new Map<THREE.Material,THREE.Matrix4[]>();
-    for(const object of decorations.children){const mesh=object as THREE.Mesh;mesh.updateMatrix();const material=mesh.material as THREE.Material;const matrices=batches.get(material)??[];matrices.push(mesh.matrix.clone());batches.set(material,matrices);}
+    const batches=new Map<THREE.BufferGeometry,Map<THREE.Material,THREE.Matrix4[]>>();
+    for(const object of decorations.children){const mesh=object as THREE.Mesh;mesh.updateMatrix();const material=mesh.material as THREE.Material,materials=batches.get(mesh.geometry)??new Map<THREE.Material,THREE.Matrix4[]>();const matrices=materials.get(material)??[];matrices.push(mesh.matrix.clone());materials.set(material,matrices);batches.set(mesh.geometry,materials);}
     decorations.clear();
-    for(const [material,matrices] of batches){const mesh=new THREE.InstancedMesh(box,material,matrices.length);matrices.forEach((matrix,i)=>mesh.setMatrixAt(i,matrix));decorations.add(mesh);}
+    for(const [shape,materials] of batches)for(const [material,matrices] of materials){const mesh=new THREE.InstancedMesh(shape,material,matrices.length);matrices.forEach((matrix,i)=>mesh.setMatrixAt(i,matrix));decorations.add(mesh);}
     this.scene.add(group);return {group,colliders,geometry,debug};
   }
   private buildFork(chunk:PlacedModule):ChunkResources {
@@ -134,5 +168,5 @@ export class RoadStream {
     for(const material of r.materials??[])material.dispose();for(const texture of r.textures??[])texture.dispose();
     this.active.delete(index);this.unloaded++;
   }
-  dispose() {for(const i of [...this.active.keys()])this.remove(i);for(const mat of [this.road,this.wall,this.white,this.structure,this.debugMat])mat.dispose();this.signMaterial?.dispose();this.signTexture?.dispose();}
+  dispose() {for(const i of [...this.active.keys()])this.remove(i);for(const mat of [this.road,this.wall,this.white,this.structure,this.debugMat,this.accent,this.beacon])mat.dispose();this.signMaterial?.dispose();this.signTexture?.dispose();for(const sign of this.windSigns.values()){sign.texture.dispose();sign.material.dispose();}this.windSigns.clear();}
 }

@@ -1,7 +1,7 @@
 import {launchBrowser} from './browser.mjs';
 import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
-const output=`test-results/refinement-${process.env.RUN_SEED??'7F2C-A91D'}-${process.env.TIME_ATTACK_OVERRUN?'overrun':'normal'}`;
+const output=`test-results/m6-${process.env.RUN_SEED??'7F2C-A91D'}-${process.env.TIME_ATTACK_OVERRUN?'overrun':'normal'}`;
 await mkdir(output,{recursive:true});
 const browser=await launchBrowser();
 try {
@@ -40,6 +40,9 @@ try {
   }
   assert.equal(initial.race.kind,initial.run.eventTypes[event]);
   assert.equal(initial.race.racers.length,initial.race.kind==='time-attack'?1:6);
+  assert.equal(initial.biome,'lighthouse-coast-v1');assert.ok(initial.windZones.length);
+  assert.ok(initial.windZones.every(z=>z.start>initial.routeStart&&z.end<initial.finish));
+  assert.equal(initial.race.racers.filter(r=>r.special).length,initial.race.kind==='road-race'?1:0);
   if(initial.race.kind==='time-attack') {
    assert.match(await page.locator('#objective').innerText(),/TIME ATTACK/);
    assert.match(await page.locator('#event-targets').innerText(),/Oro.*Argento.*Bronzo/);

@@ -1,5 +1,14 @@
 # Changelog
 
+## M6.1 Costa del Faro — 2026-09-14
+
+- Started from clean master / refreshed origin/master d185ecc; baseline 45 tests and build passed.
+- Added a coherent coastal palette, faceted islets, harbour huts, striped lighthouses, windsocks and physical wind corridor markings; scenery retains chunk streaming and instancing.
+- Added independent seeded wind metadata preserved by connected placement; all supported vehicles receive a ramped lateral force, with signs and HUD showing the same direction. road-v4 layouts, forks and continuous event transitions remain intact.
+- FARO replaces one Road Race rival with conservative cornering, bounded straight attacks, real Flow consumption and cooldown; dedicated amber car/roof beacon and Italian HUD expose its state.
+- Added gesture-unlocked optional procedural audio and 64-particle VFX, pause/results/countdown muting, persistent audio preference and improved HUD contrast on the brighter coast.
+- Added five automatic regression tests, a dedicated browser biome suite and campaign biome/rival assertions. All 50 tests, build, 1,000-road/1,000-campaign stress, biome/menu/input/race/solo browser suites and normal/over-target mixed campaigns pass. Pause audio is silenced before frame suspension. M6.1 is DONE locally; validation and limits are recorded in M6_VALIDATION.md. No push or deployment.
+
 ## M5.3 continuous event/world lifecycle — 2026-09-13
 
 - Updated remote references; origin/master was already included. Preserved the local M5.2 validation baseline and implemented on `codex/m5-3-world-continuity`.
