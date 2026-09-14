@@ -9,6 +9,7 @@ export interface RoadModule {
   lanes: number;
   turn: number;
   wave: number;
+  cycles: number;
   rise: number;
   curvature: number;
   maxGrade: number;
@@ -27,14 +28,14 @@ export interface RoadModule {
   scenerySockets: number[];
 }
 
-function define(id: string, category: RoadModule['category'], length: number, turn=0, wave=0, rise=0, technical=false): RoadModule {
-  const width=20, curvature=(Math.abs(turn)+Math.abs(wave)*2*Math.PI)/length;
+function define(id: string, category: RoadModule['category'], length: number, turn=0, wave=0, rise=0, technical=false,cycles=1): RoadModule {
+  const width=20, curvature=(Math.abs(turn)+Math.abs(wave)*2*Math.PI*cycles)/length;
   const recommendedSpeed=technical?14:curvature>.006?25:35;
   // Fixed authored profiles, flat sockets, sampled with the same integration as placement.
   let x=0,z=0;
   const steps=Math.ceil(length/2);
-  for(let i=0;i<steps;i++) {const u=(i+.5)/steps, yaw=turn*u+wave*Math.sin(u*Math.PI*2);x-=Math.sin(yaw)*length/steps;z-=Math.cos(yaw)*length/steps;}
-  return {id,category,biomeTags:['coast'],length,width,minWidth:technical?12:width,lanes:2,turn,wave,rise,curvature,maxGrade:Math.abs(rise)*Math.PI/length,banking:0,recommendedSpeed,difficulty:technical?3:curvature>.006?2:rise?1:0,minSightDistance:70,estimatedTraversalTime:length/recommendedSpeed,aiCompatible:true,eventTags:['road-race','time-attack'],flags:{tunnel:category==='tunnel',bridge:category==='bridge',jump:false,shortcut:false},entry:{x:0,y:0,z:0,yaw:0,grade:0,width},exit:{x,y:0,z,yaw:turn,grade:0,width},recoveryAnchors:[length*.25,length*.5,length*.75],hazardSockets:[],scenerySockets:[length*.2,length*.8]};
+  for(let i=0;i<steps;i++) {const u=(i+.5)/steps, yaw=turn*u+wave*Math.sin(u*Math.PI*2*cycles);x-=Math.sin(yaw)*length/steps;z-=Math.cos(yaw)*length/steps;}
+  return {id,category,biomeTags:['coast'],length,width,minWidth:technical?12:width,lanes:2,turn,wave,cycles,rise,curvature,maxGrade:Math.abs(rise)*Math.PI/length,banking:0,recommendedSpeed,difficulty:technical?3:curvature>.006?2:rise?1:0,minSightDistance:70,estimatedTraversalTime:length/recommendedSpeed,aiCompatible:true,eventTags:['road-race','time-attack'],flags:{tunnel:category==='tunnel',bridge:category==='bridge',jump:false,shortcut:false},entry:{x:0,y:0,z:0,yaw:0,grade:0,width},exit:{x,y:0,z,yaw:turn,grade:0,width},recoveryAnchors:[length*.25,length*.5,length*.75],hazardSockets:[],scenerySockets:[length*.2,length*.8]};
 }
 
 export const MODULES: readonly RoadModule[] = [
@@ -46,20 +47,24 @@ export const MODULES: readonly RoadModule[] = [
   define('dock-chicane-left','s-curve',110,0,.82,0,true),
   define('dock-chicane-right','s-curve',110,0,-.82,0,true),
   define('harbor-switchbacks','s-curve',125,0,.92,0,true),
+  define('cliff-double-esses','s-curve',240,0,.94,0,true,2),
+  define('marina-double-chicane','s-curve',220,0,-.88,0,true,2),
+  define('coastal-slalom','s-curve',210,0,.98,0,true),
   define('finish-straight','finish',150),
 ];
 
 // Explicitly placed by the director, never randomly inserted into the old modes.
-export const FORK_MODULE={...define('coastal-choice','fork',300),minWidth:12,curvature:26*2*Math.PI**2/300**2};
+export const FORK_MODULE={...define('coastal-choice','fork',620),minWidth:12,curvature:.02,recommendedSpeed:20,difficulty:2,estimatedTraversalTime:34};
 export const SPEED_RELEASE=define('coastal-express','straight',180);
 
 export function validateModule(m: RoadModule): string[] {
   const errors: string[]=[];
-  if(!Number.isFinite(m.length) || m.length<40 || m.length>300) errors.push('length');
+  if(!Number.isFinite(m.length) || m.length<40 || m.length>(m.category==='fork'?800:300)) errors.push('length');
   if(!Number.isFinite(m.width) || m.width<12 || m.width>28) errors.push('width');
   if(!Number.isFinite(m.minWidth)||m.minWidth<12||m.minWidth>m.width)errors.push('minimum width');
+  if(!Number.isInteger(m.cycles)||m.cycles<1||m.cycles>2)errors.push('wave cycles');
   if(![m.turn,m.wave,m.rise,m.curvature,m.maxGrade,m.recommendedSpeed,m.minSightDistance].every(Number.isFinite)) errors.push('non-finite metadata');
-  const curvature=(Math.abs(m.turn)+Math.abs(m.wave)*2*Math.PI)/m.length;
+  const curvature=(Math.abs(m.turn)+Math.abs(m.wave)*2*Math.PI*m.cycles)/m.length;
   if(curvature>.055 || m.curvature<curvature-1e-9) errors.push('curvature');
   if(Math.abs(m.rise)*Math.PI/m.length>.09 || m.maxGrade>.09 || m.maxGrade<Math.abs(m.rise)*Math.PI/m.length-1e-9) errors.push('grade');
   if(!m.aiCompatible || m.recommendedSpeed<10 || m.recommendedSpeed>50) errors.push('AI');
@@ -69,7 +74,7 @@ export function validateModule(m: RoadModule): string[] {
   if(!validateConnection(m.entry,{x:0,y:0,z:0,yaw:0,grade:0,width:m.width}))errors.push('entry transform');
   if(!errors.includes('length') && Number.isFinite(m.turn) && Number.isFinite(m.wave)) {
     let x=0,z=0;const n=Math.ceil(m.length/2);
-    for(let i=0;i<n;i++){const u=(i+.5)/n,yaw=m.turn*u+m.wave*Math.sin(u*Math.PI*2);x-=Math.sin(yaw)*m.length/n;z-=Math.cos(yaw)*m.length/n;}
+    for(let i=0;i<n;i++){const u=(i+.5)/n,yaw=m.turn*u+m.wave*Math.sin(u*Math.PI*2*m.cycles);x-=Math.sin(yaw)*m.length/n;z-=Math.cos(yaw)*m.length/n;}
     if(!validateConnection(m.exit,{x,y:0,z,yaw:m.turn,grade:0,width:m.width}))errors.push('exit transform');
   }
   return errors;

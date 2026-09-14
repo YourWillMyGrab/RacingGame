@@ -1,36 +1,19 @@
 # Project State
 
-- Current stable milestone: M5 is DONE: physical forks, mixed events and continuous world lifecycle are validated locally.
-- Previous validated baseline: `6459ea6` (M5.2 validation checkpoint on top of gameplay integration `b501508`).
-- Active branch: `codex/m5-3-world-continuity`; task scope checkpoint `801d50b`.
-- Remote update: fetched origin; origin/master (`bd80225`) is already merged into the baseline. No remote push or Pages deployment in this task.
-- Current task: M5.3 DONE. Validated implementation checkpoint: `d0941c9`.
-- Next task: scope the first M6 micro-milestone (first dressed biome). No M6 work is included.
+- Current task: user driving refinement on `master`, following M5.3; DONE on 2026-09-14.
+- Git baseline: `a4549fa`. Pulled origin/master and merged local M5.2/M5.3 and the remote gameplay-review branch. No branches remain outside master at integration time. No push/deployment requested.
+- M5 remains complete; M6 has not started. Current validation: see `DRIVING_REFINEMENT.md`.
 
-## Implemented
+## Current behavior
 
-- One persistent Rapier world, player body, camera and RoadStream across all three coastal events. Results/rewards pause in place; the next road connects to the previous socket with global station/chunk IDs (`world-connect-v1`).
-- Drive a roughly 145 m transfer, then cross the next start portal for a fresh stopped countdown and ordered checkpoints. Transfer time is excluded from competitive time. Pause/recovery work across the seam; zero integrity during transfer ends the run without a fake event result.
-- Finished player pose/resources freeze while rivals continue. Old rivals are removed at reward confirmation; the next event creates exactly zero/five AI. Old road meshes/colliders unload by distance, while bounded metadata grows to 42 campaign modules.
-- Integrity/Flow and upgrades persist on the same car; derived settings, Rapier collider mass and removable hooks update in place. Restart creates a fresh world and clears all build/history/resources.
-- Existing seeded schedule, both physical branches, next-event profiles, inclusive Time Attack targets and reward rules remain. Local road-v2/road-v3 geometry and time-targets-v1 are preserved; only world placement changes.
-- Standalone race/solo and the lab remain available. No permanent stat progression.
+- Physics remains fixed at 60 Hz. Player/rival rendering interpolates between physics snapshots, with wrap-safe heading interpolation and recovery resets. Chase heading is damped independently of steering; static scenery uses instancing and runtime streaming loads at most one new chunk per frame.
+- Standard controller input has a continuous dead zone and a gentle centre curve. Normal yaw respects available lateral grip, with stronger tyre recovery. A deliberate handbrake input retains a brief drift/catch window, Flow and upgrade hooks.
+- `road-v4` adds 210–240 m slalom/double-esse/chicane modules and seeded 620 m forks. Left has several direction changes and a longer physical line; right is a broad express arc. Both keep their next-event profile choice and independent recovery paths. Existing codes generate new layouts in this version.
+- One world, body and stream persist for all events. Before a Time Attack, the result leads directly to perk selection; selection pauses safely, confirmation restores finish momentum, and the next portal starts timing without stopping or countdown. Before a Road Race, results/rewards and a stopped grid countdown remain.
+- Transfers are untimed, support pause/recovery/damage and apply upgrades in place. Event checkpoints, finish freeze, failure, resources and reset semantics remain covered.
 
-## Validation
+## Validation and limits
 
-- 41/41 automatic tests and production build pass. New physical campaigns cover both finale types, body/chunk identity, resource freeze, seam recovery, rival lifecycle, in-place mass/hooks, transfer failure and disposal.
-- Stress passes 1,000 roads / 32,000 modules / 1,000 forks and 1,000 campaigns / 3,000 events / 2,000 connected boundaries / 1,489 Time Attacks.
-- All browser regressions outside the full campaign pass: menu, input/drift/boost/recovery, lab lap, modular solo and standalone six-car race.
-- Both full browser campaigns pass on Chrome 153: normal Time Attack finale (282.33 s competitive total), and over-target Time Attack followed by a six-car Road Race finale (391.50 s total). Both transfers, rewards, physical forks, pause/recovery, victory and reset passed without page exceptions. Screenshots inspected; see `M5_3_VALIDATION.md`. Historical M5.2 evidence remains in `BROWSER_VALIDATION.md`.
+Historical validation: `M5_3_VALIDATION.md`, `BROWSER_VALIDATION.md`. Current evidence and remaining checks: `DRIVING_REFINEMENT.md`, `CURRENT_TASK.md`.
 
-## Resume
-
-Read the master resume protocol and state files, inspect Git status/diff and run quick checks before starting M6. M5.3 is complete with no pending browser gate.
-
-Commands: `npm test`; `npm run build`; `npm run test:stress -- 1000`; `npm run dev`; `npm run test:menu`; `npm run test:run`; `npm run test:browser`; `npm run test:lap`; `npm run test:modular`; `npm run test:race`. `RUN_SEED=MIXED-1` exercises the Road Race finale; combine it with `TIME_ATTACK_OVERRUN=1` to validate reduced rewards and the next event's rivals.
-
-Runtime: `/` menu/campaign; `/?race=1` standalone Road Race; `/?solo=1` practice; `/?lab=1` fixed lab.
-
-## Limits
-
-Still a bounded three-event coastal slice, not the 20–30 minute three-biome MVP. Further biomes, bosses/hazards/audio, arbitrary branches and visual/performance polish remain. Physical controller hardware and human balance are unverified. The shared bundle remains approximately 3.40 MB / 1.23 MB gzip, and browser suites remain outside Pages CI.
+Still a three-event coastal slice. Physical controller feel and frame rates on the user's hardware require human playtesting. AI uses a simple passing heuristic. The shared Rapier/Three bundle remains about 3.4 MB; additional biomes, audio, bosses and broader content are future work.

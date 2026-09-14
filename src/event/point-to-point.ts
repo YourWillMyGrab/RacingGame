@@ -22,6 +22,7 @@ export class PointToPoint {
   countdown=3;
   elapsed=0;
   started=false;
+  finishVelocity={x:0,y:0,z:0};
   constructor(readonly route:ModularRoute,private world:RAPIER.World,player:Vehicle,participants:number,preservePlayer=false) {
     this.finish=route.chunks.at(-1)!.start+30;
     const rng=randomStream(route.seed,'rivals-v1');
@@ -37,6 +38,7 @@ export class PointToPoint {
       }
       vehicle.body.setLinvel({x:0,y:0,z:0},true);vehicle.body.setAngvel({x:0,y:0,z:0},true);
       vehicle.speed=0;vehicle.collider.setCollisionGroups(0x00020003);
+      vehicle.renderPose.reset({...vehicle.body.translation(),yaw:vehicle.yaw});
       this.racers.push({id:i,name:names[i],color:colors[i],vehicle,preferredLane:lane,lane,pace:.70+rng()*.2,aggression:rng(),checkpoint:route.start+40,previous:vehicle.progress,finishTime:null,stuck:0,hold:0});
     }
   }
@@ -75,7 +77,9 @@ export class PointToPoint {
       this.countdown=Math.max(0,this.countdown-dt);
       // Keep grid coordinates locked while allowing suspension to settle.
       for(const r of this.racers){const flow=r.vehicle.flow,integrity=r.vehicle.integrity;r.vehicle.step(IDLE,dt);r.vehicle.flow=flow;r.vehicle.integrity=integrity;r.vehicle.body.setLinvel({x:0,y:r.vehicle.body.linvel().y,z:0},true);}
-      this.world.step();if(this.countdown===0)this.started=true;return;
+      this.world.step();
+      for(const r of this.racers)r.vehicle.renderPose.capture({...r.vehicle.body.translation(),yaw:r.vehicle.yaw});
+      if(this.countdown===0)this.started=true;return;
     }
     this.elapsed+=dt;
     for(const r of this.racers) {
@@ -99,6 +103,7 @@ export class PointToPoint {
     }
     crossings.sort((a,b)=>a.time-b.time||a.r.id-b.r.id);
     for(const {r,time} of crossings){
+      if(r.id===0)this.finishVelocity={...r.vehicle.body.linvel()};
       r.finishTime=time;r.vehicle.collider.setCollisionGroups(0x00020001);
       r.vehicle.body.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased,true);
       r.vehicle.body.setLinvel({x:0,y:0,z:0},true);r.vehicle.body.setAngvel({x:0,y:0,z:0},true);
@@ -108,4 +113,3 @@ export class PointToPoint {
   }
   disposeRivals(){for(const r of this.racers.slice(1))this.world.removeRigidBody(r.vehicle.body);}
 }
-

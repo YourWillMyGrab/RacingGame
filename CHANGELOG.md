@@ -84,3 +84,12 @@
 - Added `DEVELOPMENT.md` with the reproducible local workflow, browser-test prerequisites and next implementation gate.
 - Installed the official `playwright` skill for browser regression work and the optional `hermes-agent` skill for Hermes orchestration; neither changes the game runtime.
 - Revalidated 30 automated tests, the production build and the 1,000-seed / 32,000-module stress run.
+
+## 2026-09-13 — Driving refinement
+
+- Integrated all outstanding branches into local master.
+- Interpolated player/rival rendering, damped chase heading, eased controller centre response, instanced scenery and paced runtime chunk loads.
+- Increased grip and constrained ordinary yaw to tyre force, preserving deliberate handbrake drift.
+- Added long compound technical roads and seeded asymmetric 620 m forks (`road-v4`, changes old seed layouts).
+- Next Time Attack goes directly to perk choice, restores finish velocity and starts at the portal without countdown. Road Race retains its grid start.
+- Validation details: DRIVING_REFINEMENT.md.

@@ -24,7 +24,7 @@ export class ModularRoute implements DrivableRoute {
   constructor(seed: string, count=24,readonly options:RouteOptions={}) {
     if(!Number.isInteger(count)||count<5||count>128) throw new Error('Module count must be between 5 and 128');
     this.seed=normalizeSeed(seed);
-    const rng=randomStream(this.seed,options.forks||options.profile&&options.profile!=='balanced'?`road-v3:${options.profile??'balanced'}`:'road-v2');
+    const rng=randomStream(this.seed,`road-v4:${options.profile??'balanced'}`);
     let socket:Socket={x:64,y:0,z:95,yaw:0,grade:0,width:20};
     for(let i=0;i<count;i++) {
       const previous=this.chunks.at(-1)?.definition;
@@ -35,7 +35,7 @@ export class ModularRoute implements DrivableRoute {
       if(i%3===2)options=options.filter(m=>m.difficulty===3);
       else if(i%3===1)options=options.filter(m=>m.difficulty<2&&Math.abs(socket.yaw+m.turn)<.001);
       else options=options.filter(m=>m.difficulty<3&&m.wave===0&&Math.abs(m.turn)!==.32);
-      if(this.options.profile==='technical'&&i%3===2)options=options.filter(m=>m.id==='harbor-switchbacks');
+      if(this.options.profile==='technical'&&i%3===2)options=options.filter(m=>m.id==='harbor-switchbacks'||m.cycles===2);
       if(this.options.profile==='technical'&&i%3===0&&options.some(m=>Math.abs(m.turn)===.5))options=options.filter(m=>Math.abs(m.turn)===.5);
       const m=i===0?MODULES[0]:i===count-1?MODULES.at(-1)!:this.options.forks&&i===6&&count>=9?FORK_MODULE:this.options.profile==='speed'&&i%3===0?SPEED_RELEASE:options[Math.floor(rng()*options.length)];
       if(!m || validateModule(m).length) throw new Error(`Invalid authored module: ${m?.id}`);
@@ -43,10 +43,11 @@ export class ModularRoute implements DrivableRoute {
       let x=socket.x,z=socket.z;
       for(let j=0;j<=n;j++) {
         const u=j/n;
-        if(j) {const mid=(j-.5)/n, a=socket.yaw+m.turn*mid+m.wave*Math.sin(mid*Math.PI*2);x-=Math.sin(a)*m.length/n;z-=Math.cos(a)*m.length/n;}
-        points.push({x,y:socket.y+m.rise*Math.sin(Math.PI*u)**2,z,yaw:socket.yaw+m.turn*u+m.wave*Math.sin(u*Math.PI*2),s:start+m.length*u,width:m.width-(m.width-m.minWidth)*Math.sin(Math.PI*u)**2});
+        if(j) {const mid=(j-.5)/n, a=socket.yaw+m.turn*mid+m.wave*Math.sin(mid*Math.PI*2*m.cycles);x-=Math.sin(a)*m.length/n;z-=Math.cos(a)*m.length/n;}
+        points.push({x,y:socket.y+m.rise*Math.sin(Math.PI*u)**2,z,yaw:socket.yaw+m.turn*u+m.wave*Math.sin(u*Math.PI*2*m.cycles),s:start+m.length*u,width:m.width-(m.width-m.minWidth)*Math.sin(Math.PI*u)**2});
       }
-      const branches=m.category==='fork'?{left:forkPoints(socket,start,m.length,'left'),right:forkPoints(socket,start,m.length,'right')}:undefined;
+      const variation=rng();
+      const branches=m.category==='fork'?{left:forkPoints(socket,start,m.length,'left',variation),right:forkPoints(socket,start,m.length,'right',variation)}:undefined;
       if(branches){for(const arm of Object.values(branches))for(const p of arm)p.forkIndex=i;points.splice(0,points.length,...branches.left);}
       const last=points.at(-1)!;
       const exit={x:last.x,y:last.y,z:last.z,yaw:last.yaw,grade:0,width:m.width};

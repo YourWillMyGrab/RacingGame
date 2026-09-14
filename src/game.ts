@@ -8,6 +8,7 @@ import { Input } from './input';
 import { Vehicle } from './vehicle';
 import { createCar } from './car';
 import { STEP } from './config';
+import {angleDelta} from './presentation';
 import { IDLE } from './race';
 import {createEvent,eventView,type CompetitiveEvent} from './event/session';
 import {EVENT_LABEL} from './event/rules';
@@ -50,6 +51,7 @@ export async function startGame() {
   $('shake').onchange=()=>{preferences.stableCamera=$<HTMLInputElement>('shake').checked;savePreferences();};
   renderer.setPixelRatio(Math.min(devicePixelRatio,preferences.highQuality?1.5:1));
   const cameraTarget=new THREE.Vector3(),look=new THREE.Vector3();
+  let cameraYaw=0;
   function clearRivalModels(){
     for(const model of rivals){scene.remove(model.root);model.root.traverse(object=>{if(object instanceof THREE.Mesh){object.geometry.dispose();for(const m of Array.isArray(object.material)?object.material:[object.material])m.dispose();}});}rivals.length=0;
   }
@@ -116,7 +118,7 @@ export async function startGame() {
   function showRewards() {
     if(!run || run.phase!=='reward')return;
     state='reward';selectedReward=0;
-    $('overlay').innerHTML=`<article class="reward-screen"><p class="eyebrow">EVENTO ${run.event+1} COMPLETATO / CODICE ${run.seed}</p><h1>Potenzia la tua auto.</h1><p>Scegli 1 potenziamento, poi riparti da qui e raggiungi la prossima partenza. ${run.results.at(-1)!.position<=3?'Riparazione fino a 8 integrità tra gli eventi.':'−8 integrità per il risultato; ricompense di rarità ridotta.'}<br>Prossimo evento: ${EVENT_LABEL[run.eventTypes[run.event+1]]} · ${PROFILE_LABEL[run.nextProfile]} · scelta guidando al bivio.<br>Configurazione attuale: ${run.owned.map(id=>UPGRADES.find(u=>u.id===id)!.name).join(' / ')||'Auto base'}</p><div class="reward-grid">${run.offers.map((u,i)=>`<button class="reward-card rarity-${u.rarity}" data-reward="${i}"><small>${i+1} / ${RARITY_IT[u.rarity].toUpperCase()}</small><strong>${u.name}</strong><p>${u.description}</p>${u.downside?`<p class="downside">${u.downside}</p>`:''}<em>${u.tags.join(' / ')}</em></button>`).join('')}</div><p class="hint">1 / 2 / 3 oppure ← → e Invio · Controller: croce direzionale e A</p></article>`;
+    $('overlay').innerHTML=`<article class="reward-screen"><p class="eyebrow">EVENTO ${run.event+1} COMPLETATO / CODICE ${run.seed}</p><h1>Potenzia la tua auto.</h1><p>${race?eventView(race).heading:'Evento completato'}</p><p>${run.eventTypes[run.event+1]==='time-attack'?'Scegli 1 potenziamento: riprendi la velocità di arrivo e attraversa il portale per iniziare la Time Attack senza fermarti.':'Scegli 1 potenziamento, poi raggiungi la griglia della prossima gara.'} ${run.results.at(-1)!.position<=3?'Riparazione fino a 8 integrità tra gli eventi.':'−8 integrità per il risultato; ricompense di rarità ridotta.'}<br>Prossimo evento: ${EVENT_LABEL[run.eventTypes[run.event+1]]} · ${PROFILE_LABEL[run.nextProfile]} · scelta guidando al bivio.<br>Configurazione attuale: ${run.owned.map(id=>UPGRADES.find(u=>u.id===id)!.name).join(' / ')||'Auto base'}</p><div class="reward-grid">${run.offers.map((u,i)=>`<button class="reward-card rarity-${u.rarity}" data-reward="${i}"><small>${i+1} / ${RARITY_IT[u.rarity].toUpperCase()}</small><strong>${u.name}</strong><p>${u.description}</p>${u.downside?`<p class="downside">${u.downside}</p>`:''}<em>${u.tags.join(' / ')}</em></button>`).join('')}</div><p class="hint">1 / 2 / 3 oppure ← → e Invio · Controller: croce direzionale e A</p></article>`;
     document.querySelectorAll<HTMLButtonElement>('[data-reward]').forEach(button=>button.onclick=()=>chooseReward(Number(button.dataset.reward)));
     highlightReward();
   }
@@ -142,29 +144,31 @@ export async function startGame() {
     const now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;fps+=(1/Math.max(.001,dt)-fps)*.05;
     const controls=input.sample();
     stream.debug=$<HTMLInputElement>('anchors').checked;
-    stream.update(vehicle.progress,race?.racers.map(r=>r.vehicle.progress));
+    stream.update(vehicle.progress,race?.racers.map(r=>r.vehicle.progress),1);
     if(state==='driving') {
       accumulator+=dt;
       while(accumulator>=STEP){if(journey){journey.step(controls,STEP);if(race!==journey.event){race=journey.event;syncRivalModels();refreshEventHud();}elapsed=race?.elapsed??0;}else if(race){race.step(controls,STEP);elapsed=race.elapsed;}else{vehicle.step(controls,STEP);world.step();vehicle.afterStep();elapsed+=STEP;}accumulator-=STEP;
         if(run&&vehicle.route instanceof RouteCursor)for(const branch of vehicle.route.choices.values())run.selectRoute(branch);
         if(vehicle.integrity<=0){if(run&&run.phase==='race'&&race)run.finish(race.result,0,vehicle.flow);overlay('wrecked');break;}
-        if(!journey?.transferring&&(race?race.player.finishTime!==null:vehicle.progress>=finish())){if(race)elapsed=race.player.finishTime!;if(run)run.finish(race!.result,vehicle.integrity,vehicle.flow);overlay('finished');break;}
+        if(!journey?.transferring&&(race?race.player.finishTime!==null:vehicle.progress>=finish())){if(race)elapsed=race.player.finishTime!;if(run)run.finish(race!.result,vehicle.integrity,vehicle.flow);overlay('finished');if(run?.phase==='reward'&&run.eventTypes[run.event+1]==='time-attack')showRewards();break;}
       }
     } else if(state==='finished' && race && race.awaitingRivals) {
       accumulator+=dt;
       while(accumulator>=STEP){race.step(IDLE,STEP);accumulator-=STEP;}
     } else accumulator=0;
     if(race && $('standings'))$('standings').innerHTML=eventView(race).standings.map(r=>`<li class="${r.you?'you':''}"><span>${r.name}</span><b>${r.value}</b></li>`).join('');
-    const p=vehicle.body.translation(),yaw=vehicle.yaw;
+    const alpha=state==='driving'?accumulator/STEP:1;
+    const p=vehicle.renderPose.sample(alpha),yaw=p.yaw;
     car.root.position.set(p.x,p.y,p.z);car.root.rotation.y=yaw;
-    for(let i=0;i<rivals.length;i++){const r=race!.racers[i+1],v=r.vehicle.body.translation();rivals[i].root.position.set(v.x,v.y,v.z);rivals[i].root.rotation.y=r.vehicle.yaw;}
-    car.body.rotation.z=THREE.MathUtils.lerp(car.body.rotation.z,-vehicle.steer*Math.min(vehicle.speed/160,.1),.1);
+    for(let i=0;i<rivals.length;i++){const r=race!.racers[i+1],v=r.vehicle.renderPose.sample(state==='driving'||state==='finished'&&race!.awaitingRivals?accumulator/STEP:1);rivals[i].root.position.set(v.x,v.y,v.z);rivals[i].root.rotation.y=v.yaw;}
+    car.body.rotation.z=THREE.MathUtils.lerp(car.body.rotation.z,-vehicle.steer*Math.min(vehicle.speed/160,.1),1-Math.exp(-dt*8));
     const ahead=vehicle.route.pointAt(vehicle.progress+2),behind=vehicle.route.pointAt(vehicle.progress-2);
-    car.body.rotation.x=THREE.MathUtils.lerp(car.body.rotation.x,Math.atan2(ahead.y-behind.y,4)+controls.throttle*.015-controls.brake*.035,.1);
+    car.body.rotation.x=THREE.MathUtils.lerp(car.body.rotation.x,Math.atan2(ahead.y-behind.y,4)+controls.throttle*.015-controls.brake*.035,1-Math.exp(-dt*8));
     for(const wheel of car.wheels)if(wheel.position.z<0)wheel.rotation.y=vehicle.steer*.3;
     const back=9+Math.min(vehicle.speed*.065,4),shake=$<HTMLInputElement>('shake').checked?0:vehicle.impact*.25*Math.sin(now*.055);
-    cameraTarget.set(p.x+Math.sin(yaw)*back+shake,p.y+4.3,p.z+Math.cos(yaw)*back);camera.position.lerp(cameraTarget,started?1-Math.exp(-dt*6):1);started=true;
-    look.set(p.x-Math.sin(yaw)*13,p.y+.6,p.z-Math.cos(yaw)*13);camera.lookAt(look);
+    cameraYaw=started?cameraYaw+angleDelta(cameraYaw,yaw)*(1-Math.exp(-dt*4)):yaw;
+    cameraTarget.set(p.x+Math.sin(cameraYaw)*back+shake,p.y+4.3,p.z+Math.cos(cameraYaw)*back);camera.position.lerp(cameraTarget,started?1-Math.exp(-dt*10):1);started=true;
+    look.set(p.x-Math.sin(cameraYaw)*13,p.y+.6,p.z-Math.cos(cameraYaw)*13);camera.lookAt(look);
     camera.fov=THREE.MathUtils.lerp(camera.fov,62+vehicle.speed*.2+(vehicle.boosting?5:0),1-Math.exp(-dt*4));camera.updateProjectionMatrix();renderer.render(scene,camera);
     $('speed').textContent=Math.round(vehicle.speed*3.6).toString().padStart(3,'0');
     $<HTMLMeterElement>('flow').value=vehicle.flow;$('flow-value').textContent=Math.floor(vehicle.flow).toString();
@@ -186,7 +190,7 @@ export async function startGame() {
     else if(race && race.player.hold>0)$('cue').textContent=`RECUPERO · ${race.player.hold.toFixed(1).replace('.',',')} S`;
     else if(race && race.player.finishTime===null && vehicle.progress>race.player.checkpoint+8)$('cue').textContent='PUNTO DI CONTROLLO SALTATO · R / Y PER RECUPERARE';
     if(journey?.transferring){
-      $('position').textContent='TRASFERIMENTO';$('event-targets').textContent='RAGGIUNGI IL PORTALE · IL CRONOMETRO PARTIRÀ DOPO IL COUNTDOWN';
+      $('position').textContent='TRASFERIMENTO';$('event-targets').textContent=run!.eventType==='time-attack'?'PARTENZA LANCIATA · ATTRAVERSA IL PORTALE SENZA FERMARTI':'RAGGIUNGI IL PORTALE · IL CRONOMETRO PARTIRÀ DOPO IL COUNTDOWN';
       $('cue').textContent=journey.hold>0?`RECUPERO · ${journey.hold.toFixed(1)} S`:`PROSSIMA PARTENZA TRA ${Math.max(0,Math.ceil(route.start-vehicle.progress))} M · ${EVENT_LABEL[run!.eventType]}`;
       $('cue').classList.remove('braking','active');
     }

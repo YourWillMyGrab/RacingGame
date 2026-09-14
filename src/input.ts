@@ -1,4 +1,9 @@
 export interface Controls { throttle: number; brake: number; steer: number; handbrake: boolean; boost: boolean }
+/** Continuous dead zone and gentle centre response, with full lock preserved. */
+export function gamepadSteer(axis:number) {
+  const value=Math.max(0,Math.min(1,(Math.abs(axis)-.12)/.88));
+  return -Math.sign(axis)*(.45*value+.55*value**3);
+}
 export class Input {
   private keys = new Set<string>();
   private padPrevious: boolean[] = [];
@@ -41,7 +46,7 @@ export class Input {
       if(b(13)&&!this.padPrevious[13])this.onNavigate(1);
       this.padPrevious = pad.buttons.map(b => b.pressed);
       const axis = pad.axes[0] ?? 0;
-      if (Math.abs(axis) > .12) result.steer = -Math.sign(axis) * (Math.abs(axis) - .12) / .88;
+      if (Math.abs(axis) > .12) result.steer = gamepadSteer(axis);
       result.throttle = Math.max(result.throttle, pad.buttons[7]?.value ?? 0);
       result.brake = Math.max(result.brake, pad.buttons[6]?.value ?? 0);
       result.handbrake ||= b(0); result.boost ||= b(1) || b(5);

@@ -1,21 +1,16 @@
 # Current Task
 
-- Task id: M5.3-world-continuity
-- Goal: one physical world/player/stream across rewards, with connected drivable transfers to the next event.
-- Status: DONE — 2026-09-13, locally validated.
-- Baseline: `6459ea6`; scope checkpoint `801d50b`. Fetched origin and merged origin/master (already included).
-- Branch: `codex/m5-3-world-continuity`.
-- Validated implementation checkpoint: `d0941c9`.
+- Task: driving refinement following user playtest, 2026-09-13.
+- Status: DONE — 2026-09-14, local implementation and validation complete.
+- Baseline: master a4549fa; all local and remote branches integrated, 41 tests pass.
+- Scope: interpolate rendering/camera; progressive controller steering; planted handling with deliberate drift; longer asymmetric forks and compound roads; rolling transfers/start for the next Time Attack.
+- Acceptance: handling, both fork surfaces and AI, deterministic generation/stress, mixed journeys, browser input/campaign, production build.
+- Preserve explicit perk selection, player/world/resources. No remote push or deployment requested.
 
-## Acceptance evidence
+## Evidence
 
-1. Physical and browser checks retain world/body identity, player pose and nearby chunk resources at both reward choices. No camera reset or road/world rebuild.
-2. Connected sockets, global stations/chunk IDs, rotated geometry validation, both transfer recoveries, pause freeze and fresh event countdown/checkpoints pass.
-3. Integrity/Flow/builds persist; derived stats and collider mass update on the same car and hook counts remain correct. Finished pose/resources freeze. Old rivals are removed and next participants are exactly one/six bodies.
-4. Both full physical campaigns complete, transfer wreck adds no fake result/reward, disposal removes road resources and hooks, new-run reset restores the base state.
-5. Final `npm test`: 41/41; build: pass; stress: 1,000 roads plus 1,000 campaigns / 2,000 connected boundaries. All existing browser regressions and two full campaigns pass on Chrome 153; screenshots inspected.
-6. Normal `7F2C-A91D`: 282.33 s competitive total, Time Attack finale. Over-target `MIXED-1`: 391.50 s total, −8 timed penalty, Road Race finale with five rivals. Both end in victory and clean reset with no page exceptions. Exact evidence: `M5_3_VALIDATION.md`.
-
-## Resume
-
-M5.1, M5.2 and M5.3 are DONE. Next milestone is M6; scope its first micro-milestone before implementation. No M6 work, remote push, PR update or Pages deployment is included. Physical gamepad hardware, human balance and performance remain separate limitations.
+- 45/45 automatic tests; build and diff whitespace check pass.
+- Stress: 1,000 roads and 1,000 connected mixed campaigns pass.
+- Browser: input, menu, lap, standalone race, modular solo and normal full campaign pass. Over-target campaign reaches the Road Race victory screen; evidence/retained-output limits are explicit in DRIVING_REFINEMENT.md.
+- Final resume smoke/menu and automatic/build checks pass after camera/pause polish.
+- Physical gamepad feel remains a human playtest. No further implementation work is pending for this request.

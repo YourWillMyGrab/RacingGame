@@ -5,6 +5,7 @@ import { Input } from './input';
 import { Vehicle } from './vehicle';
 import { createCar } from './car';
 import { STEP, tuning, DEFAULT_TUNING } from './config';
+import {angleDelta} from './presentation';
 import './style.css';
 import { FLOW_IT } from './text';
 
@@ -36,6 +37,7 @@ async function boot() {
   const input=new Input();
   let state:'title'|'driving'|'paused'|'wrecked'='title', last=performance.now(), accumulator=0, elapsed=0, lap=1, lapDistance=0, previousS=25, fps=60, started=false;
   const cameraTarget=new THREE.Vector3(), lookTarget=new THREE.Vector3();
+  let cameraYaw=0;
   function showOverlay(title:string,description:string,button:string) {
     $('overlay').innerHTML=`<article><p class="eyebrow">BANCO PROVA / NEON COAST</p><h1>${title}</h1><p>${description}</p><button id="resume">${button} <span>↗</span></button><button id="restart" class="secondary">Ricomincia la sessione</button><a class="secondary" href="${import.meta.env.BASE_URL}">← Menu principale</a></article>`;
     $('overlay').hidden=false;
@@ -76,15 +78,16 @@ async function boot() {
         if(vehicle.integrity<=0){state='wrecked';showOverlay('Fine corsa.',`Integrità esaurita. ${lap-1} giri completati · ${Math.round(elapsed+vehicle.penalty)} secondi. Riparti con la stessa auto base.`,'NUOVA SESSIONE');break;}
       }
     } else accumulator=0;
-    const p=vehicle.body.translation(), yaw=vehicle.yaw;
+    const p=vehicle.renderPose.sample(state==='driving'?accumulator/STEP:1), yaw=p.yaw;
     car.root.position.set(p.x,p.y,p.z);car.root.rotation.y=yaw;
-    car.body.rotation.z=THREE.MathUtils.lerp(car.body.rotation.z,-vehicle.steer*Math.min(vehicle.speed/160,.1),.1);
-    car.body.rotation.x=THREE.MathUtils.lerp(car.body.rotation.x,controls.throttle*.015-controls.brake*.035,.1);
+    car.body.rotation.z=THREE.MathUtils.lerp(car.body.rotation.z,-vehicle.steer*Math.min(vehicle.speed/160,.1),1-Math.exp(-dt*8));
+    car.body.rotation.x=THREE.MathUtils.lerp(car.body.rotation.x,controls.throttle*.015-controls.brake*.035,1-Math.exp(-dt*8));
     for(const wheel of car.wheels) { if(wheel.position.z<0) wheel.rotation.y=vehicle.steer*.3; }
     const back=9+Math.min(vehicle.speed*.065,4), shake=($<HTMLInputElement>('shake').checked?0:vehicle.impact*.25*Math.sin(now*.055));
-    cameraTarget.set(p.x+Math.sin(yaw)*back+shake,p.y+4.3,p.z+Math.cos(yaw)*back);
-    camera.position.lerp(cameraTarget,started?1-Math.exp(-dt*6):1);started=true;
-    lookTarget.set(p.x-Math.sin(yaw)*13,p.y+.6,p.z-Math.cos(yaw)*13);camera.lookAt(lookTarget);
+    cameraYaw=started?cameraYaw+angleDelta(cameraYaw,yaw)*(1-Math.exp(-dt*4)):yaw;
+    cameraTarget.set(p.x+Math.sin(cameraYaw)*back+shake,p.y+4.3,p.z+Math.cos(cameraYaw)*back);
+    camera.position.lerp(cameraTarget,started?1-Math.exp(-dt*10):1);started=true;
+    lookTarget.set(p.x-Math.sin(cameraYaw)*13,p.y+.6,p.z-Math.cos(cameraYaw)*13);camera.lookAt(lookTarget);
     camera.fov=THREE.MathUtils.lerp(camera.fov,62+vehicle.speed*.2+(vehicle.boosting?5:0),1-Math.exp(-dt*4));camera.updateProjectionMatrix();
     renderer.render(scene,camera);
     $('speed').textContent=Math.round(vehicle.speed*3.6).toString().padStart(3,'0');

@@ -60,3 +60,7 @@ Le skill sono installate nell’ambiente Codex dell’utente e diventano disponi
 ## Criteri di completamento
 
 Una modifica di gameplay è pronta quando passa test pertinenti, build e browser playtest del relativo loop, aggiorna i file di stato e viene registrata in un checkpoint Git. Non descrivere M5.1 come evento Time Attack o come continuità seamless: quei risultati appartengono ai micro-milestone successivi.
+
+## Driving refinement checkpoint
+
+The active baseline is now local master after integrating M5.2, M5.3 and the remote gameplay review. `DRIVING_REFINEMENT.md` records the new road-v4 layout, handling and rolling Time Attack checks. Browser pilots invert the controller response curve to retain the same requested steering commands; raw Gamepad API behavior is also covered by the input/browser tests.

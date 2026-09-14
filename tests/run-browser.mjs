@@ -1,7 +1,7 @@
 import {launchBrowser} from './browser.mjs';
 import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
-const output=`test-results/m5-3-${process.env.RUN_SEED??'7F2C-A91D'}-${process.env.TIME_ATTACK_OVERRUN?'overrun':'normal'}`;
+const output=`test-results/refinement-${process.env.RUN_SEED??'7F2C-A91D'}-${process.env.TIME_ATTACK_OVERRUN?'overrun':'normal'}`;
 await mkdir(output,{recursive:true});
 const browser=await launchBrowser();
 try {
@@ -11,7 +11,7 @@ try {
  async function pilot(branch){await page.evaluate(async(branch)=>{
   const {ModularRoute}=await import('/src/road/route.ts'),{placeRoad}=await import('/src/road/connect.ts');const snapshot=window.__roadGame,route=new ModularRoute(snapshot.seed,snapshot.moduleCount,snapshot.routeOptions);placeRoad(route,snapshot.routePlacement.socket,snapshot.routePlacement.station,snapshot.routePlacement.index);const generation=window.qaPilotGeneration=(window.qaPilotGeneration??0)+1;
   const pad={mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};window.qaPad=pad;Object.defineProperty(navigator,'getGamepads',{value:()=>[window.qaPad],configurable:true});
-  function drive(){if(generation!==window.qaPilotGeneration)return;const v=window.__roadGame,p=v.position,target=route.pointAt(v.progress+6+v.speed*.32,branch);let e=Math.atan2(-(target.x-p.x),-(target.z-p.z))-v.yaw;e=Math.atan2(Math.sin(e),Math.cos(e));const steer=Math.max(-1,Math.min(1,e*3));pad.axes[0]=-Math.sign(steer)*(.12+Math.abs(steer)*.88);const limit=route.speedAt(v.progress)*.96;pad.buttons[7]={pressed:v.speed<limit,value:v.speed<limit?.94:0};pad.buttons[6]={pressed:v.speed>limit+.7,value:v.speed>limit+.7?.65:0};if(v.state==='driving')requestAnimationFrame(drive);else pad.buttons[7]={pressed:false,value:0};}requestAnimationFrame(drive);
+  function drive(){if(generation!==window.qaPilotGeneration)return;const v=window.__roadGame,p=v.position,target=route.pointAt(v.progress+6+v.speed*.32,branch);let e=Math.atan2(-(target.x-p.x),-(target.z-p.z))-v.yaw;e=Math.atan2(Math.sin(e),Math.cos(e));const steer=Math.max(-1,Math.min(1,e*3));let lo=0,hi=1;for(let i=0;i<16;i++){const mid=(lo+hi)/2;if(.45*mid+.55*mid**3<Math.abs(steer))lo=mid;else hi=mid;}pad.axes[0]=-Math.sign(steer)*(.12+(lo+hi)/2*.88);const limit=route.speedAt(v.progress)*.96;pad.buttons[7]={pressed:v.speed<limit,value:v.speed<limit?.94:0};pad.buttons[6]={pressed:v.speed>limit+.7,value:v.speed>limit+.7?.65:0};if(v.state==='driving')requestAnimationFrame(drive);else pad.buttons[7]={pressed:false,value:0};}requestAnimationFrame(drive);
  },branch);}
  for(let event=0;event<3;event++){
   let initial=await page.evaluate(()=>window.__roadGame);
@@ -33,8 +33,8 @@ try {
     }
    }
    initial=await page.evaluate(()=>window.__roadGame);assert.ok(recovered,'transfer seam recovery');
-   assert.equal(initial.lifecycle,'event');assert.ok(initial.race.countdown>2.8);
-   assert.equal(initial.race.checkpoint,initial.routeStart+40);assert.equal(initial.elapsed,0);
+   assert.equal(initial.lifecycle,'event');if(initial.race.kind==='time-attack'){assert.equal(initial.race.countdown,0);assert.ok(initial.speed>15);}else assert.ok(initial.race.countdown>2.8);
+   assert.equal(initial.race.checkpoint,initial.routeStart+40);assert.ok(initial.elapsed<.1);
    // Stop the transfer pilot before testing countdown and pause.
    await page.evaluate(()=>{window.qaPilotGeneration++;window.qaPad.buttons[7]={pressed:false,value:0};});
   }
@@ -47,7 +47,7 @@ try {
    await page.keyboard.press('Escape');const paused=await page.evaluate(()=>window.__roadGame);
    await page.clock.runFor(2000);assert.equal((await page.evaluate(()=>window.__roadGame)).elapsed,paused.elapsed);
    await page.click('#resume');await page.clock.runFor(500);
-   const countdown=await page.evaluate(()=>window.__roadGame);assert.equal(countdown.elapsed,0);assert.equal(countdown.flow,initial.flow);assert.equal(countdown.integrity,initial.integrity);
+   const countdown=await page.evaluate(()=>window.__roadGame);assert.ok(countdown.elapsed>initial.elapsed);assert.ok(countdown.speed>5);assert.equal(countdown.integrity,initial.integrity);
    await page.screenshot({path:`${output}/time-attack-start-${event}.png`});
    if(process.env.TIME_ATTACK_OVERRUN&&event===1) {
     await page.clock.runFor((initial.race.result.targets.bronze+5)*1000);
@@ -62,7 +62,7 @@ try {
    else if(chunk>2&&chunk-lastRecoveryChunk>2&&(current.speed<1||current.progress>current.race.checkpoint+8)){await page.keyboard.press('KeyR');lastRecoveryChunk=chunk;console.log('RECOVERY',event+1,current.progress);}
   }
   let snapshot=await page.evaluate(()=>window.__roadGame);console.log('EVENT',event+1,snapshot);
-  assert.equal(snapshot.state,'finished');assert.ok(snapshot.integrity>0);assert.equal(snapshot.run.event,event);
+  assert.equal(snapshot.state,event<2&&snapshot.run.eventTypes[event+1]==='time-attack'?'reward':'finished');assert.ok(snapshot.integrity>0);assert.equal(snapshot.run.event,event);
   if(snapshot.race.kind==='time-attack') {
    assert.equal(await page.locator('#standings').count(),0);
    assert.match(await page.locator('#overlay').innerText(),/ORO|ARGENTO|BRONZO|FUORI OBIETTIVO/);
@@ -72,10 +72,10 @@ try {
   }
   const integrity=snapshot.integrity;await page.clock.runFor(2000);assert.equal((await page.evaluate(()=>window.__roadGame.integrity)),integrity,'no damage after finish');
   if(event<2){assert.ok(recoveredInFork);assert.equal(snapshot.run.routeChoices[event].branch,branch);assert.equal(snapshot.run.nextProfile,event===0?'technical':'speed');
-   await page.click('#claim-reward');assert.equal(await page.locator('[data-reward]').count(),3);await page.screenshot({path:`${output}/reward-${event+1}.png`});
+   if(snapshot.state==='finished')await page.click('#claim-reward');assert.equal(await page.locator('[data-reward]').count(),3);await page.screenshot({path:`${output}/reward-${event+1}.png`});
    if(event===0){await page.keyboard.press('ArrowRight');await page.keyboard.press('Enter');}
    else {await page.evaluate(()=>{window.qaPad.buttons[0]={pressed:true,value:1};});await page.clock.runFor(50);}
-   const beforeChoice=snapshot; snapshot=await page.evaluate(()=>window.__roadGame);assert.equal(snapshot.worldGeneration,beforeChoice.worldGeneration);assert.equal(snapshot.bodyHandle,beforeChoice.bodyHandle);assert.ok(Math.hypot(snapshot.position.x-beforeChoice.position.x,snapshot.position.z-beforeChoice.position.z)<.001);assert.ok(snapshot.createdChunks>=beforeChoice.createdChunks);assert.equal(snapshot.integrity,Math.min(100,Math.max(1,integrity+(snapshot.run.results[event].position<=3?8:-8))));assert.equal(snapshot.run.owned.length,event+1);assert.equal(snapshot.run.event,event+1);assert.equal(snapshot.state,'driving');assert.equal(snapshot.lifecycle,'transfer');assert.equal(snapshot.race,null);assert.equal(snapshot.bodies,1);await page.screenshot({path:output+'/transfer-start-'+event+'.png'});assert.equal(snapshot.run.profile,event===0?'technical':'speed');
+   const beforeChoice=snapshot; snapshot=await page.evaluate(()=>window.__roadGame);assert.equal(snapshot.worldGeneration,beforeChoice.worldGeneration);assert.equal(snapshot.bodyHandle,beforeChoice.bodyHandle);assert.ok(Math.hypot(snapshot.position.x-beforeChoice.position.x,snapshot.position.z-beforeChoice.position.z)<2.5);assert.ok(snapshot.createdChunks>=beforeChoice.createdChunks);assert.equal(snapshot.integrity,Math.min(100,Math.max(1,integrity+(snapshot.run.results[event].position<=3?8:-8))));assert.equal(snapshot.run.owned.length,event+1);assert.equal(snapshot.run.event,event+1);assert.equal(snapshot.state,'driving');assert.equal(snapshot.lifecycle,'transfer');assert.equal(snapshot.race,null);assert.equal(snapshot.bodies,1);await page.screenshot({path:output+'/transfer-start-'+event+'.png'});assert.equal(snapshot.run.profile,event===0?'technical':'speed');
   }else{assert.equal(snapshot.run.phase,'complete');await page.screenshot({path:output+'/run-complete.png'});}
  }
  await page.click('#restart');const reset=await page.evaluate(()=>window.__roadGame);assert.equal(reset.lifecycle,'event');assert.equal(reset.worldModules,12);assert.equal(reset.routeStart,25);assert.deepEqual(reset.run.results,[]);assert.equal(reset.race.kind,'road-race');assert.deepEqual(reset.run.owned,[]);assert.deepEqual(reset.run.routeChoices,[]);assert.equal(reset.run.profile,'balanced');assert.equal(reset.run.event,0);assert.equal(reset.integrity,100);assert.equal(reset.flow,25);assert.deepEqual(errors,[]);console.log('PASS continuous world, transfer pause/recovery/countdown, mixed run, Time Attack targets/pause/results, both physical arms, recovery and next-event profiles, keyboard/controller rewards, victory and clean reset');

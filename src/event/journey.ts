@@ -27,15 +27,18 @@ export class EventJourney {
   }
   choose(id:string){
     if(this.transferring||!this.event?.complete)throw new Error('Event is not finished');
+    const velocity={...this.event.finishVelocity};
     this.run.choose(id);
     this.event.disposeRivals();this.event=undefined;
     this.route=connectRoad(this.road,new ModularRoute(this.run.routeSeed,this.run.moduleCount,this.run.routeOptions));
     this.applyBuild();this.vehicle.integrity=this.run.integrity;this.vehicle.flow=this.run.flow;
     this.vehicle.route=this.road.cursor();
     this.vehicle.body.setBodyType(RAPIER.RigidBodyType.Dynamic,true);
-    // Rapier can retain the pre-finish dynamic velocity while the body is
-    // kinematic. Resume from the stopped finish pose, including controller input.
-    this.vehicle.body.setLinvel({x:0,y:0,z:0},true);
+    // The reward is a tactical pause. A timed next event resumes the finish
+    // momentum and starts on crossing its portal; a race still uses the grid.
+    const rolling=this.run.eventType==='time-attack';
+    this.vehicle.body.setLinvel(rolling?velocity:{x:0,y:0,z:0},true);
+    this.vehicle.speed=rolling?Math.hypot(velocity.x,velocity.z):0;
     this.vehicle.body.setAngvel({x:0,y:0,z:0},true);
     this.vehicle.body.resetForces(true);this.vehicle.body.resetTorques(true);
     this.vehicle.collider.setCollisionGroups(0x00020003);

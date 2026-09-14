@@ -14,7 +14,7 @@ await page.evaluate(async()=>{
     let error=Math.atan2(-(target.x-v.position.x),-(target.z-v.position.z))-v.yaw;
     error=Math.atan2(Math.sin(error),Math.cos(error));
     const steer=Math.max(-1,Math.min(1,error*2.4));
-    pad.axes[0]=-Math.sign(steer)*(.12+Math.abs(steer)*.88);
+    let lo=0,hi=1;for(let i=0;i<16;i++){const mid=(lo+hi)/2;if(.45*mid+.55*mid**3<Math.abs(steer))lo=mid;else hi=mid;}pad.axes[0]=-Math.sign(steer)*(.12+(lo+hi)/2*.88);
     pad.buttons[7]={pressed:v.speed<24,value:v.speed<24?.85:0};pad.buttons[6]={pressed:v.speed>25,value:v.speed>25?.65:0};
     if(v.lap<2 && v.integrity>0)requestAnimationFrame(drive);
     else pad.buttons[7]={pressed:false,value:0};

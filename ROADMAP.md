@@ -37,5 +37,6 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED.
 | M5.1 | Physical split/merge, independent player/AI routes and next-event profile choice | DONE |
 | M5.2 | Seeded Time Attack; automatic/build/stress and full normal/over-target browser gates passed | DONE |
 | M5.3 | Continuous event/world lifecycle across rewards and event boundaries | DONE |
+| Driving refinement | Smooth presentation/input, planted grip, complex asymmetric roads, rolling Time Attack | DONE |
 
 M4 is intentionally a short coastal slice. M5.1, M5.2 and M5.3 are complete. M6 has not been started. No procedural approval is pending: the user accepted the first prototype and authorized continued development.

@@ -16,11 +16,11 @@ export class RoadStream {
   private signTexture?:THREE.CanvasTexture;
   private signMaterial?:THREE.MeshBasicMaterial;
   constructor(readonly route: ModularRoute,private scene:THREE.Scene,private world:RAPIER.World) {}
-  update(progress:number, others:number[]=[]) {
+  update(progress:number, others:number[]=[],loadBudget=Infinity) {
     const centers=[progress,...others];
     for(const chunk of this.route.chunks) {
       const needed=centers.some(s=>chunk.end>s-180 && chunk.start<s+650);
-      if(needed && !this.active.has(chunk.index)) {this.active.set(chunk.index,this.build(chunk));this.created++;}
+      if(needed && !this.active.has(chunk.index) && loadBudget>0) {this.active.set(chunk.index,this.build(chunk));this.created++;loadBudget--;}
       else if(!needed && this.active.has(chunk.index))this.remove(chunk.index);
     }
     for(const chunk of this.active.values())chunk.debug.visible=this.debug;
@@ -77,6 +77,12 @@ export class RoadStream {
       addBox(22,.8,.8,s,0,7,this.white);
       for(let i=0;i<10;i++)addBox(2,.03,1.5,s,-9+i*2,.03,i%2?this.road:this.white);
     }
+    // Static scenery shares geometry/materials: batch it instead of issuing a
+    // separate draw call for every lamp, tunnel beam and building.
+    const batches=new Map<THREE.Material,THREE.Matrix4[]>();
+    for(const object of decorations.children){const mesh=object as THREE.Mesh;mesh.updateMatrix();const material=mesh.material as THREE.Material;const matrices=batches.get(material)??[];matrices.push(mesh.matrix.clone());batches.set(material,matrices);}
+    decorations.clear();
+    for(const [material,matrices] of batches){const mesh=new THREE.InstancedMesh(box,material,matrices.length);matrices.forEach((matrix,i)=>mesh.setMatrixAt(i,matrix));decorations.add(mesh);}
     this.scene.add(group);return {group,colliders,geometry,debug};
   }
   private buildFork(chunk:PlacedModule):ChunkResources {
@@ -85,8 +91,13 @@ export class RoadStream {
     const box=new THREE.BoxGeometry(1,1,1);geometry.push(box);
     const left=chunk.branches!.left,right=chunk.branches!.right,normal=new THREE.Vector3(Math.cos(chunk.entry.yaw),0,-Math.sin(chunk.entry.yaw));
     const vertices:number[]=[],indices:number[]=[],instances=new Map<THREE.Material,THREE.Matrix4[]>();
-    const at=(i:number,offset:number)=>new THREE.Vector3((left[i].x+right[i].x)/2,left[i].y,(left[i].z+right[i].z)/2).addScaledVector(normal,offset);
-    const bounds=(i:number)=>{const d=Math.hypot(left[i].x-right[i].x,left[i].z-right[i].z)/2,halfWidth=6/Math.cos(left[i].yaw-chunk.entry.yaw);return [-Math.max(10,d+halfWidth),Math.min(0,halfWidth-d),Math.max(0,d-halfWidth),Math.max(10,d+halfWidth)];};
+    const at=(i:number,offset:number)=>new THREE.Vector3(chunk.entry.x-Math.sin(chunk.entry.yaw)*(left[i].s-chunk.start),left[i].y,chunk.entry.z-Math.cos(chunk.entry.yaw)*(left[i].s-chunk.start)).addScaledVector(normal,offset);
+    const bounds=(i:number)=>{
+      const offset=(p:typeof left[number])=>(p.x-chunk.entry.x)*normal.x+(p.z-chunk.entry.z)*normal.z;
+      const l=offset(left[i]),r=offset(right[i]),lw=6/Math.cos(left[i].yaw-chunk.entry.yaw),rw=6/Math.cos(right[i].yaw-chunk.entry.yaw);
+      const seam=(l+r)/2;
+      return [Math.min(-10,l-lw),Math.min(seam,l+lw),Math.max(seam,r-rw),Math.max(10,r+rw)];
+    };
     const beam=(a:THREE.Vector3,b:THREE.Vector3,width:number,height:number,material:THREE.Material,physical=false)=>{
       const length=a.distanceTo(b),mesh=new THREE.Mesh(box,material);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.position.y+=height/2;mesh.scale.set(width,height,length+.04);mesh.rotation.y=Math.atan2(b.x-a.x,b.z-a.z);mesh.updateMatrix();const batch=instances.get(material)??[];batch.push(mesh.matrix.clone());instances.set(material,batch);
       if(physical)colliders.push(this.world.createCollider(RAPIER.ColliderDesc.cuboid(width/2,height/2,(length+.04)/2).setTranslation(mesh.position.x,mesh.position.y,mesh.position.z).setRotation(mesh.quaternion).setFriction(.04)));

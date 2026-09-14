@@ -11,6 +11,19 @@ import {STEP} from '../src/config.ts';
 import {drive} from './driver.ts';
 await RAPIER.init();
 
+test('forks are long, asymmetric and seeded, with multiple technical direction changes',()=>{
+ const lengths:number[]=[];
+ for(let seed=0;seed<50;seed++){
+  const road=new ModularRoute(`ASYMMETRY-${seed}`,12,{forks:true}),fork=road.chunks.find(c=>c.branches)!;
+  const length=(arm:typeof fork.points)=>arm.slice(1).reduce((sum,p,i)=>sum+Math.hypot(p.x-arm[i].x,p.z-arm[i].z),0);
+  const left=length(fork.branches!.left),right=length(fork.branches!.right);
+  assert.ok(fork.end-fork.start>=600);assert.ok(left>right+35);
+  const turns=fork.branches!.left.slice(1).filter((p,i)=>Math.sign(p.yaw-fork.entry.yaw)!==Math.sign(fork.branches!.left[i].yaw-fork.entry.yaw));
+  assert.ok(turns.length>=4);lengths.push(left);
+ }
+ assert.ok(new Set(lengths.map(l=>l.toFixed(2))).size>20);
+});
+
 test('seeded split/merge validates both arms and profiles preserve braking sectors',()=>{
  for(let i=0;i<1000;i++){
   const profile=(['balanced','technical','speed'] as const)[i%3],a=new ModularRoute(`FORK-${i}`,12,{forks:true,profile}),b=new ModularRoute(`FORK-${i}`,12,{forks:true,profile});
@@ -37,7 +50,7 @@ test('route choice changes the next seeded event once; reset clears history and 
  for(const run of [a,b]){run.finish({kind:'road-race',position:1,time:90},100,60);run.choose(run.offers[0].id);}
  assert.equal(a.profile,'technical');assert.equal(b.profile,'speed');assert.notEqual(a.routeSeed,b.routeSeed);
  const technical=new ModularRoute(a.routeSeed,a.moduleCount,a.routeOptions),speed=new ModularRoute(b.routeSeed,b.moduleCount,b.routeOptions);
- assert.ok(technical.chunks.some(c=>c.definition.id==='harbor-switchbacks'));assert.ok(speed.chunks.some(c=>c.definition.id==='coastal-express'));assert.equal(a.routeChoices.length,1);
+ assert.ok(technical.chunks.some(c=>c.definition.cycles===2||c.definition.id==='harbor-switchbacks'));assert.ok(speed.chunks.some(c=>c.definition.id==='coastal-express'));assert.equal(a.routeChoices.length,1);
  a.reset();assert.deepEqual(a.routeChoices,[]);assert.equal(a.profile,'balanced');assert.equal(a.nextProfile,'balanced');
 });
 test('fork collision has two supported carriageways and an actual gap in the island',()=>{

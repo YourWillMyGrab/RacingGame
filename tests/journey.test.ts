@@ -63,7 +63,9 @@ for(const seed of ['7F2C-A91D','MIXED-1'])test(`one world physically completes m
       journey.choose(run.offers[0].id);stream.update(car.progress);
       assert.equal(stream.active.get(currentChunk.index),chunkResources);assert.equal(car.body,body);assert.equal(car.body.handle,handle);
       assert.deepEqual({...body.translation()},pose);assert.deepEqual({...body.rotation()},rotation);
-      assert.deepEqual({...body.linvel()},{x:0,y:0,z:0});assert.deepEqual({...body.angvel()},{x:0,y:0,z:0});
+      const rolling=run.eventType==='time-attack';
+      assert.deepEqual({...body.linvel()},rolling?event.finishVelocity:{x:0,y:0,z:0});assert.deepEqual({...body.angvel()},{x:0,y:0,z:0});
+      if(rolling)assert.ok(car.speed>15,'reward retains finish momentum');
       assert.deepEqual([car.integrity,car.flow],[run.integrity,run.flow]);assert.equal(world.bodies.len(),1);
       assert.ok(oldRivals.every(r=>!r.isValid()));assert.equal(journey.event,undefined);assert.throws(()=>journey.choose('armor'));
       assert.deepEqual(car.settings,buildSettings(run.owned));assert.ok(Math.abs(car.body.mass()-car.settings.mass)<.01);
@@ -79,11 +81,14 @@ for(const seed of ['7F2C-A91D','MIXED-1'])test(`one world physically completes m
         assert.ok(car.integrity>0);assert.equal(run.elapsed,time);assert.equal(run.results.length,resultCount);
       }
       assert.ok(sawSeam&&recovered);assert.equal(journey.transferring,false);
-      const next=journey.event!;assert.equal(next.elapsed,0);assert.equal(next.countdown,3);assert.equal(next.player.checkpoint,journey.route.start+40);
+      const next=journey.event!;assert.equal(next.elapsed,0);assert.equal(next.countdown,rolling?0:3);assert.equal(next.started,rolling);assert.equal(next.player.checkpoint,journey.route.start+40);
+      if(rolling)assert.ok(car.speed>15,'portal preserves transfer speed');
       assert.equal(world.bodies.len(),next.kind==='road-race'?6:1);
       const flow=car.flow,integrity=car.integrity;
-      for(let i=0;i<120;i++)journey.step({...IDLE,throttle:1,boost:true},STEP);
-      assert.equal(car.flow,flow);assert.equal(car.integrity,integrity);assert.equal(next.elapsed,0);
+      const startProgress=car.progress;
+      for(let i=0;i<120;i++)journey.step(rolling?drive(journey.route,car):{...IDLE,throttle:1,boost:true},STEP);
+      if(rolling){assert.ok(next.elapsed>1.9);assert.ok(car.progress>startProgress+20);}
+      else {assert.equal(car.flow,flow);assert.equal(car.integrity,integrity);assert.equal(next.elapsed,0);}
       stream.update(car.progress);assert.ok(!stream.active.has(0));
     }
     assert.equal(run.phase,'complete');assert.equal(run.owned.length,2);assert.equal(run.results.length,3);assert.equal(road.chunks.length,42);

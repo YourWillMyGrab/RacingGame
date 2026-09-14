@@ -51,3 +51,10 @@
 - Rewards stop the player in place. After selection, a roughly 145 m physical transfer uses the outgoing finish straight and next launch module. Crossing the next starting gate contiguously stops the car for a three-second countdown without moving its pose; five rivals are placed safely ahead for Road Race, none for Time Attack. Transfer time is excluded from event times and the sum of competitive results.
 - Finished bodies become kinematic and stop running upgrade/vehicle ticks while rivals finish. On reward resume, explicitly clear Rapier's retained dynamic velocity. Keep resources and update derived stats, collider mass and removable hooks on the same player. Dispose old rival bodies/models; stream prior road resources away by distance. New runs dispose the stream/world and detach all hooks.
 - Transfer uses normal driving resources/damage and three-second recovery holds. Pause freezes simulation. A transfer wreck ends the run without fabricating a competitive result or extra reward. Recovery/statistics now belong to the persistent player for the whole run.
+
+## 2026-09-13 — Driving refinement decisions
+
+- Keep deterministic 60 Hz simulation and interpolate presentation, rather than tying handling to refresh rate.
+- Normal yaw follows the lateral force budget; deliberate handbrake drift is an explicit brief exception.
+- Fork station distances remain shared for ordered gates; physical lengths and steering demands now differ. Road-v4 versions the geometry change. Time targets still use the conservative authored speed envelope; new layouts recalculate them and both arms remain reachable in physical tests.
+- Perks remain a safe tactical pause. If the next event is Time Attack, remove the intermediate results click, restore stored finish velocity on selection and use a rolling start. A Road Race still needs a stopped grid for six participants.

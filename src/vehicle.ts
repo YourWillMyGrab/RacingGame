@@ -4,6 +4,7 @@ import type { Controls } from './input';
 import { nearestAnchor, trackPoint, TRACK, TRACK_LENGTH } from './track';
 import type { DrivableRoute } from './road/route';
 import { EventBus } from './events';
+import {PoseBuffer} from './presentation';
 
 export interface VehicleEvent { car:Vehicle;dt:number;amount:number;input:Controls }
 export interface VehicleEvents { tick:VehicleEvent;drift:VehicleEvent;driftExit:VehicleEvent;boost:VehicleEvent;damage:VehicleEvent;landing:VehicleEvent }
@@ -14,6 +15,7 @@ const clamp = (v: number, min: number, max: number) => Math.min(max,Math.max(min
 export class Vehicle {
   body: RAPIER.RigidBody;
   collider: RAPIER.Collider;
+  readonly renderPose:PoseBuffer;
   flow = 25;
   flowSource:'none'|'drift'|'corner'|'speed'|'exit'='none';
   flowEarned=0;
@@ -39,6 +41,7 @@ export class Vehicle {
   private airTime = 0;
   private reverseArmed = false;
   private stopTime = 0;
+  private driftAssist = 0;
   constructor(private world: RAPIER.World, public route:DrivableRoute=labRoute, readonly settings=t) {
     this.route=route.cursor?.()??route;
     const p=route.pointAt(route.start);
@@ -46,6 +49,7 @@ export class Vehicle {
     this.body=world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(p.x,p.y+1,p.z).setCanSleep(false).setCcdEnabled(true));
     this.body.setEnabledRotations(false,true,false,true);
     this.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.92,.28,1.95).setMass(settings.mass).setFriction(.05).setRestitution(.08).setCollisionGroups(0x00020003),this.body);
+    this.renderPose=new PoseBuffer({...this.body.translation(),yaw:this.yaw});
   }
   get yaw() { const q=this.body.rotation(); return Math.atan2(2*q.w*q.y,1-2*q.y*q.y); }
   applySettings(settings:typeof t) {
@@ -104,11 +108,17 @@ export class Vehicle {
       if(input.throttle>.1 && forward<0) force+=-forward*t.mass*3;
       if(this.boosting) force+=t.boostForce*clamp(1-forward/t.boostMaxSpeed,0,1);
       if(input.handbrake) force-=forward*t.mass*.65;
-      const grip=input.handbrake?t.driftGrip:t.grip;
+      // Deliberate drift gets a short catch window; normal cornering stays planted.
+      this.driftAssist=input.handbrake?1:Math.max(0,this.driftAssist-dt*2.5);
+      const grip=t.grip+(t.driftGrip-t.grip)*this.driftAssist;
       const side=clamp(-lateral*grip,-t.maxLateralAccel,t.maxLateralAccel)*t.mass;
       this.body.addForce({x:fx*force+rx*side,y:0,z:fz*force+rz*side},true);
       const speedSteer=t.steer+(t.highSpeedSteer-t.steer)*clamp(Math.abs(forward)/50,0,1);
-      const desired=this.steer*speedSteer*clamp(forward/12,-.6,1)*(input.handbrake?t.driftRotation:1);
+      const requested=this.steer*speedSteer*clamp(forward/12,-.6,1)*(input.handbrake?t.driftRotation:1);
+      // Match normal rotation to the lateral force the tyres can deliver.
+      const yawLimit=t.maxLateralAccel*.86/Math.max(8,Math.abs(forward));
+      const planted=clamp(requested,-yawLimit,yawLimit);
+      const desired=planted+(requested-planted)*this.driftAssist;
       this.body.setAngvel({x:0,y:this.body.angvel().y+(desired-this.body.angvel().y)*(1-Math.exp(-t.yawResponse*dt)),z:0},true);
     } else this.body.setAngvel({x:0,y:this.body.angvel().y*Math.exp(-dt),z:0},true);
     const drag=(t.rollingDrag+t.drag*this.speed)*t.mass;
@@ -128,6 +138,7 @@ export class Vehicle {
     this.previousSpeed=this.speed;
   }
   afterStep() {
+    this.renderPose.capture({...this.body.translation(),yaw:this.yaw});
     const t=this.settings;
     const v=this.body.linvel(), speed=Math.hypot(v.x,v.z);
     const lost=this.previousSpeed-speed;
@@ -153,9 +164,10 @@ export class Vehicle {
     this.body.setRotation({x:0,y:Math.sin(p.yaw/2),z:0,w:Math.cos(p.yaw/2)},true);
     this.body.setLinvel({x:0,y:0,z:0},true); this.body.setAngvel({x:0,y:0,z:0},true);
     this.body.resetForces(true); this.body.resetTorques(true);
-    this.speed=0; this.previousSpeed=0; this.steer=0; this.slip=0; this.driftTime=0; this.airTime=0;this.cooldown=1;
+    this.speed=0; this.previousSpeed=0; this.steer=0; this.slip=0; this.driftTime=0; this.driftAssist=0; this.airTime=0;this.cooldown=1;
     this.boosting=false;this.drifting=false; this.penalty+=t.recoveryPenalty; this.recoveries++;
     this.progress=p.s;this.lastAnchor=p.s;
+    this.renderPose.reset({...this.body.translation(),yaw:this.yaw});
   }
   restart() {
     this.integrity=100;this.lastAnchor=this.route.start;this.recover();this.flow=25;this.penalty=0;this.recoveries=0;

@@ -6,6 +6,14 @@ Per le valutazioni aggiornate, vedi `DOC_REVIEW.md` per rischi e priorità tecni
 
 Per le valutazioni aggiornate, vedi `DOC_REVIEW.md` per rischi e priorità tecniche e `GAMEPLAY_REVIEW.md` per l'analisi critica da game designer.
 
+## Aggiornamento guida — 2026-09-13
+
+Più aderenza, sterzo analogico progressivo e rendering interpolato con telecamera smorzata. Lo scenario usa meno chiamate di rendering. Il generatore `road-v4` aggiunge esse/chicane composte e bivi da 620 metri: il lato tecnico cambia direzione più volte, quello veloce segue un arco più diretto. I vecchi codici producono percorsi nuovi; lo stesso codice resta ripetibile nella versione corrente.
+
+Prima di una Time Attack passi direttamente alla scelta del perk: conferma per riprendere la velocità di arrivo e attraversa il portale senza fermarti. Il cronometro parte al passaggio. Prima di una gara con rivali rimangono risultati e partenza da fermo. La scelta del perk resta una pausa; integrità, Flow e potenziamenti passano allo stesso veicolo.
+
+Verifiche e limiti attuali: `DRIVING_REFINEMENT.md`. Le sezioni M5.2/M5.3 sotto descrivono i checkpoint storici; questa revisione aggiorna geometria e partenze Time Attack.
+
 ## Avvio e verifiche
 
 Node.js 22.12+ e browser desktop con WebGL; sviluppo verificato con Node 24.11 e Chrome.
